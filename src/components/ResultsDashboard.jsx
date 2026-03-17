@@ -9,7 +9,8 @@ import {
   CheckCircle2,
   ArrowRight,
   Download,
-  Bookmark
+  Bookmark,
+  X
 } from 'lucide-react';
 import { trackEvent } from '../services/analytics';
 
@@ -45,18 +46,30 @@ const metaLabel = {
 
 const shortText = (value = '', max = 170) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
 
-const UniversityImage = ({ item, className }) => (
-  <img
-    src={item?.image || item?.imageFallback || '/images/university-placeholder.svg'}
-    alt={item?.name || 'University image'}
-    className={className}
-    loading="lazy"
-    onError={(e) => {
-      e.currentTarget.onerror = null;
-      e.currentTarget.src = '/images/university-placeholder.svg';
-    }}
-  />
-);
+const UniversityImage = ({ item, className }) => {
+  const placeholder = `${import.meta.env.BASE_URL}images/university-placeholder.svg`;
+  const candidates = (item?.imageCandidates && item.imageCandidates.length ? item.imageCandidates : [item?.image, item?.imageFallback]).filter(Boolean);
+  const [candidateIndex, setCandidateIndex] = useState(0);
+
+  const currentSrc = candidates[candidateIndex] || placeholder;
+
+  return (
+    <img
+      src={currentSrc}
+      alt={item?.name || 'University image'}
+      className={className}
+      loading="lazy"
+      onError={(e) => {
+        if (candidateIndex < candidates.length - 1) {
+          setCandidateIndex((prev) => prev + 1);
+          return;
+        }
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = placeholder;
+      }}
+    />
+  );
+};
 
 const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
   if (!item) return null;
@@ -119,9 +132,25 @@ const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
   );
 };
 
+const DetailModal = ({ open, onClose, children }) => {
+  if (!open) return null;
+
+  return (
+    <div className="report-detail-modal-overlay" onClick={onClose}>
+      <div className="report-detail-modal-shell" onClick={(e) => e.stopPropagation()}>
+        <button className="report-detail-close" onClick={onClose} aria-label="Close university details">
+          <X size={18} />
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const ResultsDashboard = ({ results }) => {
   const [shortlist, setShortlist] = useState(new Set());
   const [selectedId, setSelectedId] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const detailRef = useRef(null);
 
   const allResults = useMemo(() => [...results.High, ...results.Medium, ...results.Low], [results]);
@@ -145,6 +174,7 @@ const ResultsDashboard = ({ results }) => {
 
   const handleSelectItem = (itemId) => {
     setSelectedId(itemId);
+    setDetailOpen(true);
     if (window.innerWidth <= 900 && detailRef.current) {
       requestAnimationFrame(() => {
         detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -276,13 +306,19 @@ const ResultsDashboard = ({ results }) => {
       </section>
 
       <section ref={detailRef} className="report-detail-anchor" aria-label="Selected university details">
+        <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>
+          Click any university card to open full details.
+        </p>
+      </section>
+
+      <DetailModal open={detailOpen} onClose={() => setDetailOpen(false)}>
         <DetailPanel
           item={selectedItem}
           shortlisted={selectedItem ? shortlist.has(selectedItem.id) : false}
           onToggleShortlist={toggleShortlist}
           onExport={exportItem}
         />
-      </section>
+      </DetailModal>
 
       <div className="results-footer-cta">
         <button className="btn-primary" onClick={() => window.location.reload()}>

@@ -39,7 +39,7 @@ const REGION_TO_COUNTRIES = {
   Oceania: ['Australia']
 };
 
-const LOCAL_IMAGE_FALLBACK = '/images/university-placeholder.svg';
+const LOCAL_IMAGE_FALLBACK = `${import.meta.env.BASE_URL}images/university-placeholder.svg`;
 
 const FALLBACK_UNIVERSITIES = [
   {
