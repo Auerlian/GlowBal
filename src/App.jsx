@@ -154,7 +154,7 @@ function App() {
       <AmbientBackground density="page" />
       {renderHeader()}
 
-      <main className="container flex-col flex-center content-layer" style={{ flex: 1, padding: '0.4rem 0 0.9rem' }}>
+      <main className="container content-layer main-content" style={{ flex: 1, padding: '0.15rem 0 0.65rem' }}>
         {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
 
         {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
