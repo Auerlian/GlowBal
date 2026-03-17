@@ -58,7 +58,7 @@ const TierSection = ({ title, description, icon: Icon, color, items, delayMs, sh
                     <p style={{ fontWeight: 700, fontSize: '0.92rem' }}>Why this match</p>
                   </div>
                   <ul>
-                    {item.why.map((reason) => (
+                    {(item.matchReasons || item.why || []).map((reason) => (
                       <li key={reason} style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem', lineHeight: '1.45' }}>{reason}</li>
                     ))}
                   </ul>
@@ -123,7 +123,7 @@ const ResultsDashboard = ({ results }) => {
       `Summary: ${item.desc}`,
       '',
       'Why this match:',
-      ...item.why.map((reason, i) => `${i + 1}. ${reason}`),
+      ...(item.matchReasons || item.why || []).map((reason, i) => `${i + 1}. ${reason}`),
       '',
       `Source: ${item.link}`
     ].join('\n');
