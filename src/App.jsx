@@ -17,6 +17,9 @@ const STATES = {
 
 function App() {
   const [currentState, setCurrentState] = useState(STATES.IDLE);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const heroVideoSrc = `${import.meta.env.BASE_URL}Rotating_Globe_Video_for_Website.mp4`;
   
   // Data State
   const [questions, setQuestions] = useState([]);
@@ -67,32 +70,38 @@ function App() {
   };
 
   const renderHeader = () => (
-    <div style={{ position: 'relative', width: '100%', height: currentState === STATES.IDLE ? '60vh' : '20vh', transition: 'height 0.8s cubic-bezier(0.25, 0.8, 0.25, 1)', overflow: 'hidden' }}>
-      <video 
-        autoPlay 
-        loop 
-        muted 
-        playsInline
-        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 0 }}
-      >
-        <source src="/Rotating_Globe_Video_for_Website.mp4" type="video/mp4" />
-      </video>
-      <div style={{
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        background: 'linear-gradient(to bottom, rgba(255,255,255,0.7) 0%, rgba(255,255,255,1) 100%)',
-        zIndex: 1
-      }} />
+    <div className="hero-shell" style={{ height: currentState === STATES.IDLE ? '60vh' : '20vh' }}>
+      <div className="hero-fallback" aria-hidden="true">
+        <div className="hero-fallback-brand">GLOWBAL ✦</div>
+      </div>
+
+      {!videoFailed && (
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          preload="metadata"
+          className="hero-video"
+          style={{ opacity: videoReady ? 1 : 0 }}
+          onCanPlay={() => setVideoReady(true)}
+          onError={() => setVideoFailed(true)}
+        >
+          <source src={heroVideoSrc} type="video/mp4" />
+        </video>
+      )}
+
+      <div className="hero-overlay" />
       
       <header style={{ 
         padding: '2rem 5%', 
         display: 'flex', 
         justifyContent: 'center',
         position: 'relative',
-        zIndex: 2,
+        zIndex: 3,
         height: '100%',
         alignItems: currentState === STATES.IDLE ? 'center' : 'flex-start',
-        borderBottom: currentState !== STATES.IDLE ? '1px solid rgba(0,0,0,0.05)' : 'none'
+        borderBottom: currentState !== STATES.IDLE ? '1px solid rgba(0,0,0,0.08)' : 'none'
       }}>
         <div 
           style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', transform: currentState === STATES.IDLE ? 'scale(1.5)' : 'scale(1)', transition: 'all 0.5s ease', marginTop: currentState === STATES.IDLE ? '-5vh' : '0' }}
@@ -112,7 +121,7 @@ function App() {
             <span style={{ fontSize: '2.5rem', color: 'var(--glowbal-mint)' }}>✦</span>
           </div>
           {currentState === STATES.IDLE && (
-            <p style={{ fontSize: '1rem', color: 'var(--glowbal-text)', fontWeight: 600, textAlign: 'center', marginTop: '1rem', maxWidth: '700px', textShadow: '0 1px 15px rgba(255,255,255,1)' }}>
+            <p style={{ fontSize: '1rem', color: 'var(--glowbal-text)', fontWeight: 700, textAlign: 'center', marginTop: '1rem', maxWidth: '700px', textShadow: '0 2px 20px rgba(255,255,255,0.95)' }}>
               CV-informed university matching with transparent scoring across reach, target, and safety options.
             </p>
           )}
