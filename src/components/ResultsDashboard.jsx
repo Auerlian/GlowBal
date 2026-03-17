@@ -9,95 +9,89 @@ import {
   Download,
   CheckCircle2,
   Scale,
-  X
+  X,
+  FileWarning,
+  ArrowRight
 } from 'lucide-react';
 import { trackEvent } from '../services/analytics';
 
-const TierSection = ({ title, description, icon: Icon, color, items, delayMs, shortlist, onToggleShortlist, onExport }) => {
+const TierSection = ({ title, description, icon, color, items, shortlist, onToggleShortlist, onExport }) => {
+  const TierIcon = icon;
+
   return (
-    <div className={`flex-col animate-slide-in`} style={{ gap: '1.2rem', animationDelay: delayMs }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', borderBottom: `1px solid ${color}`, paddingBottom: '0.7rem' }}>
-        <Icon size={32} color={color} />
-        <div>
-          <h2 style={{ fontSize: '1.65rem', color }}>{title} Tier</h2>
-          <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>{description}</p>
+    <section className="results-section glass-panel animate-slide-in">
+      <div className="results-section-head" style={{ borderBottomColor: color }}>
+        <div className="results-section-title-wrap">
+          <TierIcon size={24} color={color} />
+          <h2>{title}</h2>
         </div>
+        <p>{description}</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.15rem' }}>
+      <div className="results-grid">
         {items.map((item) => {
           const isShortlisted = shortlist.has(item.id);
           return (
-            <div key={item.id} className="glass-panel result-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
-              <div style={{ height: '170px', width: '100%', overflow: 'hidden' }}>
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
-                  onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-                />
-              </div>
+            <article key={item.id} className="result-card glass-panel">
+              <img src={item.image} alt={item.name} className="result-image" />
 
-              <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flex: 1, gap: '0.8rem' }}>
+              <div className="result-body">
                 <div>
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 700 }}>{item.name}</h3>
-                  <span style={{ background: 'rgba(0,0,0,0.05)', padding: '4px 12px', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, display: 'inline-block', color: 'var(--glowbal-text)' }}>
-                    📍 {item.location}
-                  </span>
+                  <h3>{item.name}</h3>
+                  <p className="result-location">{item.location}</p>
+                  <p className="result-summary">{item.desc}</p>
                 </div>
 
-                <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.95rem', lineHeight: '1.5' }}>{item.desc}</p>
-
                 <div className="match-why-card">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <div className="result-why-head">
                     <Info size={15} color="var(--glowbal-mint)" />
-                    <p style={{ fontWeight: 700, fontSize: '0.92rem' }}>Why this match</p>
+                    <p>Why this match</p>
                   </div>
                   <ul>
                     {(item.matchReasons || item.why || []).map((reason) => (
-                      <li key={reason} style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem', lineHeight: '1.45' }}>{reason}</li>
+                      <li key={reason}>{reason}</li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="result-actions" style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
-                  <button className="btn-secondary" onClick={() => onToggleShortlist(item)} style={{ width: '100%', padding: '0.7rem' }}>
-                    {isShortlisted ? <><CheckCircle2 size={16} /> Remove from shortlist</> : <><BookmarkPlus size={16} /> Add to shortlist</>}
+                <div className="result-actions">
+                  <button className="btn-secondary" onClick={() => onToggleShortlist(item)}>
+                    {isShortlisted ? <><CheckCircle2 size={16} /> Shortlisted</> : <><BookmarkPlus size={16} /> Add to shortlist</>}
                   </button>
-                  <button className="btn-secondary" onClick={() => onExport(item)} style={{ width: '100%', padding: '0.7rem' }}>
-                    <Download size={16} /> Export match brief
+                  <button className="btn-secondary" onClick={() => onExport(item)}>
+                    <Download size={16} /> Export brief
                   </button>
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none', width: '100%', padding: '0.75rem' }}
-                  >
-                    View programme page <ExternalLink size={16} />
+                  <a href={item.link} target="_blank" rel="noopener noreferrer" className="btn-primary result-link-cta">
+                    View programme <ExternalLink size={16} />
                   </a>
                 </div>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 };
 
 const ComparisonTable = ({ items }) => {
-  if (!items.length) return <p style={{ color: 'var(--glowbal-silver)' }}>Shortlist options to compare up to 3 universities.</p>;
+  if (!items.length) {
+    return (
+      <div className="results-empty">
+        <FileWarning size={18} color="var(--glowbal-silver)" />
+        <p>Select up to 3 universities from your shortlist to unlock side-by-side comparison.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse' }}>
+      <table className="comparison-table">
         <thead>
           <tr>
-            <th style={{ textAlign: 'left', padding: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.1)' }}>Criteria</th>
+            <th>Criteria</th>
             {items.map((item) => (
-              <th key={item.id} style={{ textAlign: 'left', padding: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.1)' }}>{item.name}</th>
+              <th key={item.id}>{item.name}</th>
             ))}
           </tr>
         </thead>
@@ -105,14 +99,12 @@ const ComparisonTable = ({ items }) => {
           {[
             ['Location', (item) => item.location],
             ['Summary', (item) => item.desc],
-            ['Website', (item) => <a href={item.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--glowbal-mint)' }}>Open</a>]
+            ['Website', (item) => <a href={item.link} target="_blank" rel="noopener noreferrer">Open programme</a>]
           ].map(([label, getter]) => (
             <tr key={label}>
-              <td style={{ padding: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)', fontWeight: 700 }}>{label}</td>
+              <td>{label}</td>
               {items.map((item) => (
-                <td key={`${label}-${item.id}`} style={{ padding: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.08)', color: 'var(--glowbal-silver)' }}>
-                  {getter(item)}
-                </td>
+                <td key={`${label}-${item.id}`}>{getter(item)}</td>
               ))}
             </tr>
           ))}
@@ -171,32 +163,27 @@ const LeadModal = ({ isOpen, onClose, shortlistItems }) => {
   const inputStyle = { width: '100%', padding: '0.7rem 0.9rem', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.12)' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={close}>
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '620px', padding: '1.25rem' }} onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.4rem' }}>Lead Capture</h3>
+    <div className="results-modal-overlay" onClick={close}>
+      <div className="glass-panel results-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="results-modal-head">
+          <h3>Share shortlist details</h3>
           <button className="btn-secondary" onClick={close} style={{ padding: '0.4rem 0.7rem' }}><X size={16} /></button>
         </div>
-        <form onSubmit={submit} style={{ display: 'grid', gap: '0.8rem' }}>
-          {[
-            ['name', 'Name'],
-            ['email', 'Email'],
-            ['intake', 'Preferred intake'],
-            ['budget', 'Budget']
-          ].map(([key, label]) => (
+        <form onSubmit={submit} className="results-form-grid">
+          {[['name', 'Name'], ['email', 'Email'], ['intake', 'Preferred intake'], ['budget', 'Budget']].map(([key, label]) => (
             <label key={key} style={{ display: 'grid', gap: '0.25rem' }}>
               <span style={{ fontWeight: 600 }}>{label}</span>
-              <input style={inputStyle} value={form[key]} onChange={(e) => setForm(prev => ({ ...prev, [key]: e.target.value }))} />
+              <input style={inputStyle} value={form[key]} onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))} />
               {errors[key] && <small style={{ color: 'var(--glowbal-pink)' }}>{errors[key]}</small>}
             </label>
           ))}
           <label style={{ display: 'grid', gap: '0.25rem' }}>
             <span style={{ fontWeight: 600 }}>Notes</span>
-            <textarea rows={4} style={inputStyle} value={form.notes} onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))} />
+            <textarea rows={4} style={inputStyle} value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} />
           </label>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.7rem' }}>
+          <div className="results-modal-actions">
             <button type="button" className="btn-secondary" onClick={close}>Cancel</button>
-            <button type="submit" className="btn-primary"><Download size={16} /> Validate & Download JSON</button>
+            <button type="submit" className="btn-primary"><Download size={16} /> Download JSON</button>
           </div>
         </form>
       </div>
@@ -249,35 +236,43 @@ const ResultsDashboard = ({ results }) => {
   };
 
   return (
-    <div className="results-wrap flex-col animate-fade-in" style={{ gap: '2.2rem', padding: '0.6rem 0 1.2rem', width: '100%', maxWidth: '1200px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-        <h1 style={{ fontSize: '2.8rem', marginBottom: '0.5rem', lineHeight: '1.1' }}>
-          Your <span className="text-gradient">GLOWBAL</span> Match Report
-        </h1>
-        <p style={{ fontSize: '1rem', color: 'var(--glowbal-silver)' }}>
-          Ranked options by competitiveness, with transparent fit signals from your answers.
-        </p>
-      </div>
+    <div className="results-wrap flex-col animate-fade-in">
+      <header className="results-header">
+        <h1>Your <span className="text-gradient">GlowBal</span> match report</h1>
+        <p>Review your recommended universities, shortlist your preferred options, then export a clean report.</p>
+        <p style={{ fontSize: '0.85rem', color: 'var(--glowbal-silver)' }}>Data source: {results.source === 'live' ? 'Live public API' : results.source === 'live+fallback' ? 'Live API + fallback cache' : 'Fallback cache'}</p>
+      </header>
 
-      <div className="glass-panel" style={{ padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-        <p style={{ color: 'var(--glowbal-silver)' }}><strong>{shortlistItems.length}</strong> shortlisted</p>
-        <button className="btn-primary" onClick={() => setLeadOpen(true)}><Download size={16} /> Lead form + JSON</button>
-      </div>
+      <section className="glass-panel results-shortlist-bar">
+        <div>
+          <p className="results-shortlist-count">Shortlisted: <strong>{shortlistItems.length}</strong></p>
+          <p className="results-shortlist-help">You can compare up to 3 universities at once.</p>
+        </div>
+        <button className="btn-primary" onClick={() => setLeadOpen(true)} disabled={shortlistItems.length === 0}>
+          <Download size={16} /> Export shortlist report
+        </button>
+      </section>
 
-      <div className="glass-panel" style={{ padding: '1.25rem' }}>
-        <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Scale size={18} color="var(--glowbal-pink)" /> Comparison (max 3)
-        </h3>
-        {shortlistItems.length > 3 && <p style={{ color: 'var(--glowbal-pink)', marginBottom: '0.8rem' }}>Showing first 3 of {shortlistItems.length} shortlisted options.</p>}
+      <section className="glass-panel results-section">
+        <div className="results-section-head" style={{ borderBottomColor: 'rgba(0,0,0,0.1)' }}>
+          <div className="results-section-title-wrap">
+            <Scale size={18} color="var(--glowbal-pink)" />
+            <h2>Comparison</h2>
+          </div>
+          <p>Quickly scan your top shortlisted options side by side.</p>
+        </div>
+        {shortlistItems.length > 3 && <p className="results-warning">Showing first 3 of {shortlistItems.length} shortlisted options.</p>}
         <ComparisonTable items={compareItems} />
-      </div>
+      </section>
 
-      <TierSection title="High Reach" description="Ambitious options with lower admission probability, but strong upside." icon={Flame} color="var(--glowbal-pink)" items={results.High} delayMs="100ms" shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
-      <TierSection title="Target" description="Balanced fit and competitiveness for your current profile." icon={Target} color="var(--glowbal-mint)" items={results.Medium} delayMs="300ms" shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
-      <TierSection title="Safety" description="Lower-risk options to keep your admissions strategy resilient." icon={Anchor} color="var(--glowbal-silver)" items={results.Low} delayMs="500ms" shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
+      <TierSection title="Reach" description="Ambitious options with lower admission probability and high upside." icon={Flame} color="var(--glowbal-pink)" items={results.High} shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
+      <TierSection title="Target" description="Balanced options aligned with your current profile and preferences." icon={Target} color="var(--glowbal-mint)" items={results.Medium} shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
+      <TierSection title="Safety" description="Lower-risk options to keep your admissions strategy resilient." icon={Anchor} color="var(--glowbal-silver)" items={results.Low} shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
 
-      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-        <button className="btn-primary" onClick={() => window.location.reload()}>Start new matching run</button>
+      <div className="results-footer-cta">
+        <button className="btn-primary" onClick={() => window.location.reload()}>
+          Start a new matching run <ArrowRight size={16} />
+        </button>
       </div>
 
       <LeadModal isOpen={leadOpen} onClose={() => setLeadOpen(false)} shortlistItems={shortlistItems} />

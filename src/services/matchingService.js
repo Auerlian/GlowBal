@@ -2,7 +2,7 @@ import { generateTieredMatches } from './matchingEngine';
 import { parseProfileSignals } from './profileParser';
 import { getUniversityCandidates } from './universityDataService';
 
-const mockQuestions = [
+const profileQuestions = [
   {
     id: 'q_degree',
     text: 'What degree level are you seeking?',
@@ -73,7 +73,7 @@ export const processCV = async (file) => {
 
   return {
     status: 'success',
-    data: mockQuestions,
+    data: profileQuestions,
     profileSignals
   };
 };
