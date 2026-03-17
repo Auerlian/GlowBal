@@ -18,11 +18,9 @@ const STATES = {
 
 function App() {
   const [currentState, setCurrentState] = useState(STATES.IDLE);
-  const [videoReady, setVideoReady] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
-  const heroVideoSrc = `${import.meta.env.BASE_URL}Rotating_Globe_Video_for_Website.mp4`;
-  
-  // Data State
+  const [logoVideoFailed, setLogoVideoFailed] = useState(false);
+  const logoVideoSrc = `${import.meta.env.BASE_URL}Rotating_Globe_Video_for_Website.mp4`;
+
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -36,32 +34,30 @@ function App() {
       setQuestions(response.data);
       setCurrentState(STATES.QUESTIONNAIRE);
     } catch (error) {
-      console.error("Error processing CV", error);
+      console.error('Error processing CV', error);
       setCurrentState(STATES.IDLE);
     }
   };
 
   const processAnswers = async (finalAnswers) => {
-      setCurrentState(STATES.ANALYZING_ANSWERS);
-      try {
-        const finalResults = await generateResults(finalAnswers);
-        setResults(finalResults);
-        setCurrentState(STATES.RESULTS);
-      } catch (error) {
-        console.error("Error generating results", error);
-        setCurrentState(STATES.IDLE);
-      }
-  }
+    setCurrentState(STATES.ANALYZING_ANSWERS);
+    try {
+      const finalResults = await generateResults(finalAnswers);
+      setResults(finalResults);
+      setCurrentState(STATES.RESULTS);
+    } catch (error) {
+      console.error('Error generating results', error);
+      setCurrentState(STATES.IDLE);
+    }
+  };
 
   const handleAnswerSubmit = (questionId, selectedOptions) => {
     const newAnswers = { ...answers, [questionId]: selectedOptions };
     setAnswers(newAnswers);
 
     if (currentQuestionIndex < questions.length - 1) {
-      // Go to next question
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentQuestionIndex((prev) => prev + 1);
     } else {
-      // Finished questions, get results
       trackEvent('questionnaire_complete', {
         totalQuestions: questions.length,
         answeredQuestions: Object.keys(newAnswers).length
@@ -70,87 +66,52 @@ function App() {
     }
   };
 
+  const goHome = () => {
+    if (currentState !== STATES.ANALYZING_CV && currentState !== STATES.ANALYZING_ANSWERS) {
+      setCurrentState(STATES.IDLE);
+      setCurrentQuestionIndex(0);
+      setAnswers({});
+      setResults(null);
+    }
+  };
+
   const renderHeader = () => (
-    <div className="hero-shell" style={{ height: currentState === STATES.IDLE ? '44vh' : '16vh', minHeight: currentState === STATES.IDLE ? '300px' : '120px', maxHeight: currentState === STATES.IDLE ? '460px' : '190px' }}>
-      <div className="hero-fallback" aria-hidden="true">
-        <div className="hero-fallback-brand">GLOWBAL ✦</div>
-      </div>
-
-      {!videoFailed && (
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline
-          preload="metadata"
-          className="hero-video"
-          style={{ opacity: videoReady ? 1 : 0 }}
-          onCanPlay={() => setVideoReady(true)}
-          onError={() => setVideoFailed(true)}
-        >
-          <source src={heroVideoSrc} type="video/mp4" />
-        </video>
-      )}
-
-      <AmbientBackground density={currentState === STATES.IDLE ? 'hero' : 'compact'} />
-      <div className="hero-overlay" />
-      
-      <header style={{ 
-        padding: currentState === STATES.IDLE ? '1.25rem 5%' : '1rem 5%', 
-        display: 'flex', 
-        justifyContent: 'center',
-        position: 'relative',
-        zIndex: 3,
-        height: '100%',
-        alignItems: currentState === STATES.IDLE ? 'center' : 'flex-start',
-        borderBottom: currentState !== STATES.IDLE ? '1px solid rgba(0,0,0,0.08)' : 'none'
-      }}>
-        <div 
-          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transform: currentState === STATES.IDLE ? 'scale(1.3)' : 'scale(1)', transition: 'all 0.5s ease', marginTop: currentState === STATES.IDLE ? '-2vh' : '0' }}
-          onClick={() => {
-            if (currentState !== STATES.ANALYZING_CV && currentState !== STATES.ANALYZING_ANSWERS) {
-               setCurrentState(STATES.IDLE);
-               setCurrentQuestionIndex(0);
-               setAnswers({});
-               setResults(null);
-            }
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '1px' }}>
-              GLOWBAL
-            </span>
-            <span style={{ fontSize: '2.5rem', color: 'var(--glowbal-mint)' }}>✦</span>
-          </div>
-          {currentState === STATES.IDLE && (
-            <p style={{ fontSize: '1rem', color: 'var(--glowbal-text)', fontWeight: 700, textAlign: 'center', marginTop: '1rem', maxWidth: '700px', textShadow: '0 2px 20px rgba(255,255,255,0.95)' }}>
-              CV-informed university matching with transparent scoring across reach, target, and safety options.
-            </p>
-          )}
-        </div>
-      </header>
-    </div>
+    <header className="topbar content-layer">
+      <button className="brand-button" onClick={goHome} aria-label="Go to GlowBal home">
+        {!logoVideoFailed ? (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            className="brand-video"
+            onError={() => setLogoVideoFailed(true)}
+          >
+            <source src={logoVideoSrc} type="video/mp4" />
+          </video>
+        ) : (
+          <div className="brand-fallback">✦</div>
+        )}
+      </button>
+    </header>
   );
 
   const renderLoadingState = (text) => (
     <div className="flex-col flex-center animate-fade-in" style={{ height: '60vh', gap: '2rem' }}>
       <div style={{ position: 'relative', width: '100px', height: '100px' }} className="flex-center">
-        <Loader2 
-          size={64} 
-          color="var(--glowbal-pink)" 
-          style={{ animation: 'spin 2s linear infinite' }} 
-        />
-        <div 
-          style={{ 
-            position: 'absolute', 
-            width: '100%', 
-            height: '100%', 
-            borderRadius: '50%', 
+        <Loader2 size={64} color="var(--glowbal-pink)" style={{ animation: 'spin 2s linear infinite' }} />
+        <div
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
             border: '4px solid var(--glowbal-mint)',
             borderTopColor: 'transparent',
             borderBottomColor: 'transparent',
             animation: 'spin 3s linear infinite reverse'
-          }} 
+          }}
         />
       </div>
       <h2 style={{ fontSize: '2rem' }} className="animate-pulse">{text}</h2>
@@ -162,17 +123,15 @@ function App() {
     <div className="min-h-screen flex-col app-shell">
       <AmbientBackground density="page" />
       {renderHeader()}
-      
-      <main className="container flex-col flex-center content-layer" style={{ flex: 1, padding: '1.1rem 0 1.5rem' }}>
-        {currentState === STATES.IDLE && (
-          <HeroUpload onUpload={handleCVUpload} />
-        )}
 
-        {currentState === STATES.ANALYZING_CV && renderLoadingState("Analyzing your CV...")}
+      <main className="container flex-col flex-center content-layer" style={{ flex: 1, padding: '0.4rem 0 0.9rem' }}>
+        {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
+
+        {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
 
         {currentState === STATES.QUESTIONNAIRE && questions.length > 0 && (
-          <QuestionCard 
-            key={questions[currentQuestionIndex].id} // Force re-render/animation on question change
+          <QuestionCard
+            key={questions[currentQuestionIndex].id}
             question={questions[currentQuestionIndex]}
             index={currentQuestionIndex}
             total={questions.length}
@@ -180,11 +139,9 @@ function App() {
           />
         )}
 
-        {currentState === STATES.ANALYZING_ANSWERS && renderLoadingState("Curating perfect matches...")}
+        {currentState === STATES.ANALYZING_ANSWERS && renderLoadingState('Curating perfect matches...')}
 
-        {currentState === STATES.RESULTS && results && (
-          <ResultsDashboard results={results} />
-        )}
+        {currentState === STATES.RESULTS && results && <ResultsDashboard results={results} />}
       </main>
     </div>
   );

@@ -300,8 +300,12 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-upload-wrap {
-    gap: 1rem !important;
-    padding-bottom: 1.25rem !important;
+    gap: 0.7rem !important;
+    padding-bottom: 0.8rem !important;
+  }
+
+  .compact-how-grid {
+    grid-template-columns: 1fr;
   }
 
   .question-card {
@@ -364,6 +368,66 @@ h1, h2, h3, h4, h5, h6 {
   .btn-secondary {
     transition-duration: 0.01ms !important;
   }
+}
+
+.topbar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.45rem 1rem 0.15rem;
+  min-height: 74px;
+}
+
+.brand-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 14px;
+}
+
+.brand-video,
+.brand-fallback {
+  width: 62px;
+  height: 62px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+}
+
+.brand-video {
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  animation: logoFadePulse 4s ease-in-out infinite;
+}
+
+.brand-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 77, 140, 0.14), rgba(0, 180, 216, 0.16));
+  color: var(--glowbal-mint);
+  font-size: 1.4rem;
+}
+
+@keyframes logoFadePulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.hero-upload-wrap {
+  max-height: calc(100dvh - 120px);
+}
+
+.compact-how-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.compact-trust {
+  max-width: 660px;
+  padding: 0.55rem 0.8rem;
 }
 
 .hero-shell {

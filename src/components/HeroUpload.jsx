@@ -3,16 +3,16 @@ import { Upload, ChevronRight, Check, ShieldCheck, Sparkles } from 'lucide-react
 
 const howItWorks = [
   {
-    title: '1) Parse your profile',
-    detail: 'We extract degree level, interests, and experience from your CV to avoid repetitive forms.'
+    title: 'Parse your CV',
+    detail: 'Extracts level, interests, and experience signals.'
   },
   {
-    title: '2) Capture your preferences',
-    detail: 'You answer 10 focused questions on budget, region, learning style, and post-study goals.'
+    title: 'Capture preferences',
+    detail: '10 focused questions: budget, region, style, goals.'
   },
   {
-    title: '3) Rank and explain options',
-    detail: 'We return reach/target/safety options with clear reasons tied to your answers.'
+    title: 'Rank + explain',
+    detail: 'Returns reach/target/safety with fit reasons.'
   }
 ];
 
@@ -47,33 +47,30 @@ const HeroUpload = ({ onUpload }) => {
   };
 
   const submitCV = () => {
-    if (fileName) {
-      onUpload(fileName);
-    }
+    if (fileName) onUpload(fileName);
   };
 
   return (
-    <div className="hero-upload-wrap flex-col flex-center animate-fade-in" style={{ gap: '1.25rem', padding: '0 0 1.75rem 0', width: '100%' }}>
-      <div style={{ textAlign: 'center', maxWidth: '900px' }}>
-        <h2 style={{ fontSize: '2.2rem', marginBottom: '0.65rem', textAlign: 'center', lineHeight: '1.15' }}>
+    <div className="hero-upload-wrap flex-col flex-center animate-fade-in" style={{ gap: '0.8rem', padding: '0 0 0.9rem 0', width: '100%' }}>
+      <div style={{ textAlign: 'center', maxWidth: '880px' }}>
+        <h2 style={{ fontSize: '1.85rem', marginBottom: '0.4rem', textAlign: 'center', lineHeight: '1.12' }}>
           Build a realistic university shortlist in <span className="text-gradient">minutes.</span>
         </h2>
-        <p style={{ fontSize: '1rem', color: 'var(--glowbal-silver)', lineHeight: '1.5' }}>
-          GlowBal combines your CV with structured preference questions to rank options by fit and admission competitiveness.
-          No generic recommendations, just decisions you can act on.
+        <p style={{ fontSize: '0.95rem', color: 'var(--glowbal-silver)', lineHeight: '1.35' }}>
+          CV + preference matching with transparent scoring.
         </p>
       </div>
 
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', padding: '1.05rem 1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <Sparkles size={18} color="var(--glowbal-mint)" />
-          <h3 style={{ fontSize: '1.1rem' }}>How matching works</h3>
+      <div className="glass-panel" style={{ width: '100%', maxWidth: '920px', padding: '0.7rem 0.9rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.55rem' }}>
+          <Sparkles size={16} color="var(--glowbal-mint)" />
+          <h3 style={{ fontSize: '1rem' }}>How matching works</h3>
         </div>
-        <div className="how-grid">
+        <div className="how-grid compact-how-grid">
           {howItWorks.map((step) => (
-            <div key={step.title} className="how-card">
-              <p style={{ fontWeight: 700, marginBottom: '0.35rem' }}>{step.title}</p>
-              <p style={{ color: 'var(--glowbal-silver)', lineHeight: '1.45', fontSize: '0.94rem' }}>{step.detail}</p>
+            <div key={step.title} className="how-card" style={{ padding: '0.65rem 0.7rem' }}>
+              <p style={{ fontWeight: 700, marginBottom: '0.2rem', fontSize: '0.92rem' }}>{step.title}</p>
+              <p style={{ color: 'var(--glowbal-silver)', lineHeight: '1.3', fontSize: '0.84rem' }}>{step.detail}</p>
             </div>
           ))}
         </div>
@@ -83,9 +80,9 @@ const HeroUpload = ({ onUpload }) => {
         className={`glass-panel flex-col flex-center ${isHovered ? 'hovered' : ''}`}
         style={{
           width: '100%',
-          maxWidth: '680px',
-          minHeight: '210px',
-          height: 'clamp(210px, 28vh, 250px)',
+          maxWidth: '660px',
+          minHeight: '150px',
+          height: 'clamp(150px, 20vh, 185px)',
           borderStyle: isHovered ? 'solid' : 'dashed',
           borderColor: isHovered ? 'var(--glowbal-mint)' : 'rgba(0,0,0,0.2)',
           borderWidth: '2px',
@@ -107,45 +104,43 @@ const HeroUpload = ({ onUpload }) => {
         />
 
         {fileName ? (
-          <div className="flex-col flex-center animate-fade-in" style={{ gap: '1rem' }}>
-            <div style={{
-              width: '64px', height: '64px', borderRadius: '50%',
-              background: 'rgba(0, 180, 216, 0.1)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center'
-            }}>
-              <Check size={32} color="var(--glowbal-mint)" />
+          <div className="flex-col flex-center animate-fade-in" style={{ gap: '0.55rem' }}>
+            <div
+              style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '50%',
+                background: 'rgba(0, 180, 216, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Check size={24} color="var(--glowbal-mint)" />
             </div>
-            <h3 style={{ color: 'var(--glowbal-mint)' }}>CV ready for analysis</h3>
-            <p style={{ color: 'var(--glowbal-silver)' }}>{fileName}</p>
+            <h3 style={{ color: 'var(--glowbal-mint)', fontSize: '1rem' }}>CV ready for analysis</h3>
+            <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>{fileName}</p>
           </div>
         ) : (
-          <div className="flex-col flex-center" style={{ gap: '0.75rem' }}>
-            <Upload size={42} color={isHovered ? 'var(--glowbal-mint)' : 'var(--glowbal-pink)'}
-              style={{ transition: 'all 0.3s ease' }} />
-            <h3>Upload your CV to begin matching</h3>
-            <p style={{ color: 'var(--glowbal-silver)' }}>Drag and drop, or click to browse</p>
+          <div className="flex-col flex-center" style={{ gap: '0.5rem' }}>
+            <Upload size={34} color={isHovered ? 'var(--glowbal-mint)' : 'var(--glowbal-pink)'} style={{ transition: 'all 0.3s ease' }} />
+            <h3 style={{ fontSize: '1rem' }}>Upload your CV to begin matching</h3>
+            <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>Drag/drop or click to browse</p>
           </div>
         )}
       </div>
 
-      <div className="trust-strip glass-panel">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
-          <ShieldCheck size={18} color="var(--glowbal-mint)" />
-          <p style={{ fontWeight: 700 }}>Your data and privacy</p>
+      <div className="trust-strip glass-panel compact-trust">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.2rem' }}>
+          <ShieldCheck size={16} color="var(--glowbal-mint)" />
+          <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>Privacy</p>
         </div>
-        <p>
-          We only use CV content + your questionnaire answers to generate this shortlist. No social media scraping, no hidden profiling.
-          In this demo, files are processed in-session and not used to train external models.
-        </p>
+        <p style={{ fontSize: '0.84rem', lineHeight: '1.3' }}>Only your CV + answers are used for this run. No hidden profiling.</p>
       </div>
 
       {fileName && (
-        <button
-          className="btn-primary animate-slide-in"
-          onClick={(e) => { e.stopPropagation(); submitCV(); }}
-          style={{ marginTop: '0.5rem' }}
-        >
-          Start profile analysis <ChevronRight size={20} />
+        <button className="btn-primary animate-slide-in" onClick={(e) => { e.stopPropagation(); submitCV(); }} style={{ marginTop: '0.2rem' }}>
+          Start profile analysis <ChevronRight size={18} />
         </button>
       )}
     </div>
