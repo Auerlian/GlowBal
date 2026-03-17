@@ -16,9 +16,9 @@ const howItWorks = [
   }
 ];
 
-const HeroUpload = ({ onUpload }) => {
+const HeroUpload = ({ onUpload, uploadNotice }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [fileName, setFileName] = useState('');
+  const [file, setFile] = useState(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -35,19 +35,19 @@ const HeroUpload = ({ onUpload }) => {
     setIsHovered(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      setFileName(files[0].name);
+      setFile(files[0]);
     }
   };
 
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (files.length > 0) {
-      setFileName(files[0].name);
+      setFile(files[0]);
     }
   };
 
   const submitCV = () => {
-    if (fileName) onUpload(fileName);
+    if (file) onUpload(file);
   };
 
   return (
@@ -103,7 +103,7 @@ const HeroUpload = ({ onUpload }) => {
           onChange={handleFileChange}
         />
 
-        {fileName ? (
+        {file ? (
           <div className="flex-col flex-center animate-fade-in" style={{ gap: '0.55rem' }}>
             <div
               style={{
@@ -119,7 +119,7 @@ const HeroUpload = ({ onUpload }) => {
               <Check size={24} color="var(--glowbal-mint)" />
             </div>
             <h3 style={{ color: 'var(--glowbal-mint)', fontSize: '1rem' }}>CV ready for analysis</h3>
-            <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>{fileName}</p>
+            <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>{file.name}</p>
           </div>
         ) : (
           <div className="flex-col flex-center" style={{ gap: '0.5rem' }}>
@@ -138,7 +138,13 @@ const HeroUpload = ({ onUpload }) => {
         <p style={{ fontSize: '0.84rem', lineHeight: '1.3' }}>Only your CV + answers are used for this run. No hidden profiling.</p>
       </div>
 
-      {fileName && (
+      {uploadNotice && (
+        <div className="glass-panel" style={{ width: '100%', maxWidth: '660px', padding: '0.55rem 0.75rem', fontSize: '0.84rem', color: uploadNotice.isError ? '#b91c1c' : 'var(--glowbal-mint)' }}>
+          {uploadNotice.message}
+        </div>
+      )}
+
+      {file && (
         <button className="btn-primary animate-slide-in" onClick={(e) => { e.stopPropagation(); submitCV(); }} style={{ marginTop: '0.2rem' }}>
           Start profile analysis <ChevronRight size={18} />
         </button>

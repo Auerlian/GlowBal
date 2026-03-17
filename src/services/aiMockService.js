@@ -1,7 +1,6 @@
-// Mock AI service that remains deterministic and explainable.
-// It still mimics network latency and uses local scoring logic only.
-
 import { generateTieredMatches } from './matchingEngine';
+import { parseProfileSignals } from './profileParser';
+import { getUniversityCandidates } from './universityDataService';
 
 const mockQuestions = [
   {
@@ -68,15 +67,20 @@ const mockQuestions = [
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const processCV = async () => {
-  await delay(2500);
+export const processCV = async (file) => {
+  await delay(900);
+  const profileSignals = await parseProfileSignals(file);
+
   return {
     status: 'success',
-    data: mockQuestions
+    data: mockQuestions,
+    profileSignals
   };
 };
 
-export const generateResults = async (answers = {}) => {
-  await delay(1800);
-  return generateTieredMatches(answers);
+export const generateResults = async (answers = {}, profileSignals = {}) => {
+  await delay(800);
+  const { universities, source } = await getUniversityCandidates(answers);
+  const tiers = generateTieredMatches(answers, universities, profileSignals);
+  return { ...tiers, source };
 };
