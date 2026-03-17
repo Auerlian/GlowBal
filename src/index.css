@@ -19,6 +19,8 @@
   --space-3: clamp(1rem, 2.4vw, 1.35rem);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+img, video { max-width: 100%; }
 body {
   font-family: var(--font-main);
   background-color: var(--glowbal-bg);
@@ -49,13 +51,13 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .btn-primary {
   background: linear-gradient(135deg, var(--glowbal-pink), var(--glowbal-pink-light));
   color: white; border: none; padding: 11px 24px; border-radius: 100px; font-family: var(--font-main); font-weight: 600; font-size: 1rem; cursor: pointer;
-  transition: all 0.25s ease; box-shadow: 0 4px 14px rgba(255, 77, 140, 0.28); display: inline-flex; align-items: center; gap: 8px;
+  transition: all 0.25s ease; box-shadow: 0 4px 14px rgba(255, 77, 140, 0.28); display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap-min);
 }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255, 77, 140, 0.34); }
 .btn-secondary {
   background: rgba(255, 255, 255, 0.92); color: var(--glowbal-text); border: 1px solid rgba(0, 0, 0, 0.1); padding: 11px 24px; border-radius: 100px;
-  font-family: var(--font-main); font-weight: 600; font-size: 0.98rem; cursor: pointer; transition: all 0.25s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-main); font-weight: 600; font-size: 0.98rem; cursor: pointer; transition: all 0.25s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tap-min);
 }
 .btn-secondary:hover { background: rgba(0, 180, 216, 0.05); border-color: var(--glowbal-mint); }
 .btn-selected { background: rgba(0, 180, 216, 0.1); border-color: var(--glowbal-mint); box-shadow: 0 0 15px rgba(0, 180, 216, 0.15); font-weight: 700; }
@@ -74,7 +76,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .match-why-card { border: 1px solid rgba(0, 180, 216, 0.2); background: rgba(0, 180, 216, 0.05); border-radius: 12px; padding: 0.75rem 0.85rem; }
 .match-why-card ul { margin: 0.45rem 0 0 1rem; color: var(--glowbal-silver); font-size: 0.9rem; line-height: 1.4; }
 .result-actions { display: grid; grid-template-columns: 1fr; gap: 0.55rem; }
-.app-shell { position: relative; isolation: isolate; }
+.app-shell { position: relative; isolation: isolate; overflow-x: clip; }
 .content-layer { position: relative; z-index: 1; }
 .main-content { margin-top: 0; }
 .app-main { display: grid; gap: 1rem; padding: 0.3rem 0 1rem; }
@@ -94,6 +96,11 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .hero-upload-wrap { max-height: calc(100dvh - 120px); }
 .compact-how-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .compact-trust { max-width: 660px; padding: 0.55rem 0.8rem; }
+.hero-intro { text-align: center; max-width: 880px; padding-inline: 0.25rem; }
+.hero-intro-title { font-size: clamp(1.5rem, 6.5vw, 1.95rem); margin-bottom: 0.4rem; text-align: center; line-height: 1.12; text-wrap: balance; }
+.hero-intro-subtitle { font-size: clamp(0.92rem, 3.5vw, 1rem); color: var(--glowbal-silver); line-height: 1.4; }
+.upload-dropzone { padding: var(--space-2); }
+.hero-start-btn { width: min(100%, 380px); justify-content: center; }
 
 .loading-state { height: 60vh; gap: 1.2rem; }
 .loading-state h2 { font-size: 1.7rem; }
@@ -260,8 +267,8 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(0, 0, 0, 0.12);
@@ -272,6 +279,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 }
 .report-card-bookmark.is-on { color: var(--glowbal-mint); border-color: rgba(0, 180, 216, 0.45); }
 
+.report-detail-anchor { scroll-margin-top: 84px; }
 .report-detail-panel { padding: 1rem; display: grid; grid-template-columns: 1.1fr 1.5fr; gap: 1rem; }
 .report-detail-image { width: 100%; height: 100%; min-height: 280px; max-height: 400px; object-fit: cover; border-radius: 14px; }
 .report-detail-body { display: grid; gap: 0.8rem; }
@@ -303,14 +311,20 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   .question-title { max-width: 100%; }
   .results-header h1 { font-size: 1.8rem; }
   .report-columns { grid-template-columns: 1fr; }
+  .report-tier-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .report-detail-panel { grid-template-columns: 1fr; }
   .report-detail-image { min-height: 220px; max-height: 280px; }
 }
 @media (max-width: 740px) {
   .container { padding: 0 12px; }
+  .topbar { min-height: 44px; }
+  .brand-video, .brand-fallback { height: 128px; }
   .question-shell { padding-bottom: 0.9rem; }
   .question-card { gap: 0.95rem; padding: 1rem; border-radius: 18px; }
   .question-meta-row { align-items: flex-start; }
+  .question-meta-primary { font-size: 0.76rem; }
+  .question-meta-secondary { font-size: 0.8rem; }
+  .question-title { font-size: clamp(1.2rem, 6vw, 1.45rem); }
   .question-option { min-height: 54px; padding: 0.76rem 0.9rem; }
   .question-next-row {
     flex-direction: column-reverse;
@@ -326,12 +340,18 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   .question-nav-row { flex-direction: column-reverse; }
   .question-nav-row .btn-primary, .question-nav-row .btn-secondary { width: 100%; }
   .report-menu-bar, .report-menu-actions, .report-detail-actions { width: 100%; }
+  .report-menu-bar { position: sticky; top: 6px; z-index: 5; }
   .report-menu-actions { justify-content: space-between; }
+  .report-tier-cards { grid-template-columns: 1fr; }
+  .report-compact-body h3 { font-size: 0.95rem; }
   .report-detail-head { flex-direction: column; }
+  .report-card-bookmark { width: 44px; height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .ambient-diamond { animation: none; opacity: 0.08; transform: rotate(45deg); }
   .ambient-layer .ambient-diamond:nth-child(n + 9) { display: none; }
+  .animate-fade-in, .animate-slide-in { animation: none !important; }
   .glass-panel, .how-card, .match-why-card, .btn-primary, .btn-secondary { transition-duration: 0.01ms !important; }
 }
 ::-webkit-scrollbar { width: 8px; }

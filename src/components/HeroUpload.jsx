@@ -52,11 +52,11 @@ const HeroUpload = ({ onUpload }) => {
 
   return (
     <div className="hero-upload-wrap flex-col flex-center animate-fade-in" style={{ gap: '0.8rem', padding: '0 0 0.9rem 0', width: '100%' }}>
-      <div style={{ textAlign: 'center', maxWidth: '880px' }}>
-        <h2 style={{ fontSize: '1.85rem', marginBottom: '0.4rem', textAlign: 'center', lineHeight: '1.12' }}>
+      <div className="hero-intro">
+        <h2 className="hero-intro-title">
           Build a realistic university shortlist in <span className="text-gradient">minutes.</span>
         </h2>
-        <p style={{ fontSize: '0.95rem', color: 'var(--glowbal-silver)', lineHeight: '1.35' }}>
+        <p className="hero-intro-subtitle">
           CV + preference matching with transparent scoring.
         </p>
       </div>
@@ -77,7 +77,7 @@ const HeroUpload = ({ onUpload }) => {
       </div>
 
       <div
-        className={`glass-panel flex-col flex-center ${isHovered ? 'hovered' : ''}`}
+        className={`glass-panel flex-col flex-center upload-dropzone ${isHovered ? 'hovered' : ''}`}
         style={{
           width: '100%',
           maxWidth: '660px',
@@ -138,7 +138,7 @@ const HeroUpload = ({ onUpload }) => {
         <p style={{ fontSize: '0.84rem', lineHeight: '1.3' }}>Only your CV + answers are used for this run. No hidden profiling.</p>
       </div>
       {file && (
-        <button className="btn-primary animate-slide-in" onClick={(e) => { e.stopPropagation(); submitCV(); }} style={{ marginTop: '0.2rem' }}>
+        <button className="btn-primary animate-slide-in hero-start-btn" onClick={(e) => { e.stopPropagation(); submitCV(); }} style={{ marginTop: '0.2rem' }}>
           Start profile analysis <ChevronRight size={18} />
         </button>
       )}

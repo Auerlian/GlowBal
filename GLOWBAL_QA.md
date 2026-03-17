@@ -30,6 +30,17 @@ Date: 2026-03-17
   - Added breakpoints for <=1024 and <=768 widths.
   - Question metadata, controls, and error actions stack correctly on mobile.
 
+## Mobile QA Checklist (360px–430px)
+
+Test in browser devtools with these exact viewport widths: **360x800, 375x812, 390x844, 412x915, 430x932**.
+
+- [ ] Home: hero title wraps cleanly, upload dropzone fully visible, start CTA >=44px high, no horizontal scroll.
+- [ ] Upload state: long CV filename truncates/wraps without overflow; trust strip remains readable.
+- [ ] Quiz: option tiles + back/next controls remain thumb-friendly (>=44px), progression text does not clip.
+- [ ] Results: sticky report action bar stays usable; tier cards and bookmarks remain tappable; selecting card scrolls to detail smoothly on mobile.
+- [ ] Detail panel: image, metadata chips, and action buttons stack without clipping; external link + export are full-width readable.
+- [ ] Motion/perf: reduced-motion disables entrance animations; scrolling remains smooth and jank-free.
+
 ## Build & Lint
 
 - [x] **PASS** `npm run build`
