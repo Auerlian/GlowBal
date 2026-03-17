@@ -78,7 +78,7 @@ const QuestionCard = ({ question, index, total, onNext }) => {
           onClick={handleNext}
           disabled={selected.length === 0}
         >
-          {index === total - 1 ? 'Analyze Matches' : 'Next Question'} <ChevronRight size={20} />
+          {index === total - 1 ? 'Generate ranked shortlist' : 'Save answer & continue'} <ChevronRight size={20} />
         </button>
       </div>
     </div>
