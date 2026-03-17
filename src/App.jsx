@@ -3,6 +3,7 @@ import HeroUpload from './components/HeroUpload';
 import QuestionCard from './components/QuestionCard';
 import ResultsDashboard from './components/ResultsDashboard';
 import { processCV, generateResults } from './services/aiMockService';
+import { trackEvent } from './services/analytics';
 import { Loader2 } from 'lucide-react';
 import './index.css';
 
@@ -24,6 +25,7 @@ function App() {
   const [results, setResults] = useState(null);
 
   const handleCVUpload = async (fileName) => {
+    trackEvent('upload_start', { fileName });
     setCurrentState(STATES.ANALYZING_CV);
     try {
       const response = await processCV(fileName);
@@ -56,6 +58,10 @@ function App() {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       // Finished questions, get results
+      trackEvent('questionnaire_complete', {
+        totalQuestions: questions.length,
+        answeredQuestions: Object.keys(newAnswers).length
+      });
       processAnswers(newAnswers);
     }
   };
@@ -106,8 +112,8 @@ function App() {
             <span style={{ fontSize: '2.5rem', color: 'var(--glowbal-mint)' }}>✦</span>
           </div>
           {currentState === STATES.IDLE && (
-            <p style={{ fontSize: '1rem', color: 'var(--glowbal-text)', fontWeight: 600, textAlign: 'center', marginTop: '1rem', maxWidth: '600px', textShadow: '0 1px 15px rgba(255,255,255,1)' }}>
-              Navigate your academic journey. Let our AI curate the perfect universities and courses for your future.
+            <p style={{ fontSize: '1rem', color: 'var(--glowbal-text)', fontWeight: 600, textAlign: 'center', marginTop: '1rem', maxWidth: '700px', textShadow: '0 1px 15px rgba(255,255,255,1)' }}>
+              CV-informed university matching with transparent scoring across reach, target, and safety options.
             </p>
           )}
         </div>
@@ -137,7 +143,7 @@ function App() {
         />
       </div>
       <h2 style={{ fontSize: '2rem' }} className="animate-pulse">{text}</h2>
-      <p style={{ color: 'var(--glowbal-silver)' }}>Our AI is working its magic...</p>
+      <p style={{ color: 'var(--glowbal-silver)' }}>Using only your CV and questionnaire data for this recommendation run.</p>
     </div>
   );
 
