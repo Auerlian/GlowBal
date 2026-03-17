@@ -3,7 +3,7 @@ import { Loader2, AlertTriangle, RefreshCcw } from 'lucide-react';
 import HeroUpload from './components/HeroUpload';
 import QuestionCard from './components/QuestionCard';
 import ResultsDashboard from './components/ResultsDashboard';
-import { processCV, generateResults } from './services/aiMockService';
+import { processCV, generateResults } from './services/matchingService';
 import { trackEvent } from './services/analytics';
 import AmbientBackground from './components/AmbientBackground';
 import './index.css';
@@ -100,7 +100,6 @@ function App() {
       setAnswers({});
       setResults(null);
       setProfileContext(null);
-      setUploadNotice(null);
       setErrorMessage('');
     }
   };
@@ -199,11 +198,12 @@ function App() {
       <main className="container content-layer main-content app-main">
         {errorMessage && renderErrorState()}
 
-        {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} uploadNotice={uploadNotice} />}
+        {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
         {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
 
         {currentState === STATES.QUESTIONNAIRE && questions.length > 0 && (
           <QuestionCard
+            key={questions[currentQuestionIndex].id}
             question={questions[currentQuestionIndex]}
             index={currentQuestionIndex}
             total={questions.length}
