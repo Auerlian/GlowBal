@@ -16,7 +16,7 @@ const howItWorks = [
   }
 ];
 
-const HeroUpload = ({ onUpload, uploadNotice }) => {
+const HeroUpload = ({ onUpload }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [file, setFile] = useState(null);
 
@@ -137,13 +137,6 @@ const HeroUpload = ({ onUpload, uploadNotice }) => {
         </div>
         <p style={{ fontSize: '0.84rem', lineHeight: '1.3' }}>Only your CV + answers are used for this run. No hidden profiling.</p>
       </div>
-
-      {uploadNotice && (
-        <div className="glass-panel" style={{ width: '100%', maxWidth: '660px', padding: '0.55rem 0.75rem', fontSize: '0.84rem', color: uploadNotice.isError ? '#b91c1c' : 'var(--glowbal-mint)' }}>
-          {uploadNotice.message}
-        </div>
-      )}
-
       {file && (
         <button className="btn-primary animate-slide-in" onClick={(e) => { e.stopPropagation(); submitCV(); }} style={{ marginTop: '0.2rem' }}>
           Start profile analysis <ChevronRight size={18} />
