@@ -53,18 +53,18 @@ const HeroUpload = ({ onUpload }) => {
   };
 
   return (
-    <div className="flex-col flex-center animate-fade-in" style={{ gap: '2rem', padding: '0 0 4rem 0', width: '100%' }}>
+    <div className="hero-upload-wrap flex-col flex-center animate-fade-in" style={{ gap: '1.25rem', padding: '0 0 1.75rem 0', width: '100%' }}>
       <div style={{ textAlign: 'center', maxWidth: '900px' }}>
-        <h2 style={{ fontSize: '2.6rem', marginBottom: '1rem', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '2.2rem', marginBottom: '0.65rem', textAlign: 'center', lineHeight: '1.15' }}>
           Build a realistic university shortlist in <span className="text-gradient">minutes.</span>
         </h2>
-        <p style={{ fontSize: '1.05rem', color: 'var(--glowbal-silver)', lineHeight: '1.6' }}>
+        <p style={{ fontSize: '1rem', color: 'var(--glowbal-silver)', lineHeight: '1.5' }}>
           GlowBal combines your CV with structured preference questions to rank options by fit and admission competitiveness.
           No generic recommendations, just decisions you can act on.
         </p>
       </div>
 
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', padding: '1.5rem 1.75rem' }}>
+      <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', padding: '1.05rem 1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <Sparkles size={18} color="var(--glowbal-mint)" />
           <h3 style={{ fontSize: '1.1rem' }}>How matching works</h3>
@@ -84,7 +84,8 @@ const HeroUpload = ({ onUpload }) => {
         style={{
           width: '100%',
           maxWidth: '680px',
-          height: '280px',
+          minHeight: '210px',
+          height: 'clamp(210px, 28vh, 250px)',
           borderStyle: isHovered ? 'solid' : 'dashed',
           borderColor: isHovered ? 'var(--glowbal-mint)' : 'rgba(0,0,0,0.2)',
           borderWidth: '2px',
@@ -118,8 +119,8 @@ const HeroUpload = ({ onUpload }) => {
             <p style={{ color: 'var(--glowbal-silver)' }}>{fileName}</p>
           </div>
         ) : (
-          <div className="flex-col flex-center" style={{ gap: '1rem' }}>
-            <Upload size={48} color={isHovered ? 'var(--glowbal-mint)' : 'var(--glowbal-pink)'}
+          <div className="flex-col flex-center" style={{ gap: '0.75rem' }}>
+            <Upload size={42} color={isHovered ? 'var(--glowbal-mint)' : 'var(--glowbal-pink)'}
               style={{ transition: 'all 0.3s ease' }} />
             <h3>Upload your CV to begin matching</h3>
             <p style={{ color: 'var(--glowbal-silver)' }}>Drag and drop, or click to browse</p>

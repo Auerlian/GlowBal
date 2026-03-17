@@ -15,21 +15,21 @@ import { trackEvent } from '../services/analytics';
 
 const TierSection = ({ title, description, icon: Icon, color, items, delayMs, shortlist, onToggleShortlist, onExport }) => {
   return (
-    <div className={`flex-col animate-slide-in`} style={{ gap: '2rem', animationDelay: delayMs }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: `1px solid ${color}`, paddingBottom: '1rem' }}>
+    <div className={`flex-col animate-slide-in`} style={{ gap: '1.2rem', animationDelay: delayMs }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', borderBottom: `1px solid ${color}`, paddingBottom: '0.7rem' }}>
         <Icon size={32} color={color} />
         <div>
-          <h2 style={{ fontSize: '2rem', color }}>{title} Tier</h2>
+          <h2 style={{ fontSize: '1.65rem', color }}>{title} Tier</h2>
           <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>{description}</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.15rem' }}>
         {items.map((item) => {
           const isShortlisted = shortlist.has(item.id);
           return (
-            <div key={item.id} className="glass-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
-              <div style={{ height: '200px', width: '100%', overflow: 'hidden' }}>
+            <div key={item.id} className="glass-panel result-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
+              <div style={{ height: '170px', width: '100%', overflow: 'hidden' }}>
                 <img
                   src={item.image}
                   alt={item.name}
@@ -39,7 +39,7 @@ const TierSection = ({ title, description, icon: Icon, color, items, delayMs, sh
                 />
               </div>
 
-              <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, gap: '1rem' }}>
+              <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flex: 1, gap: '0.8rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 700 }}>{item.name}</h3>
                   <span style={{ background: 'rgba(0,0,0,0.05)', padding: '4px 12px', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, display: 'inline-block', color: 'var(--glowbal-text)' }}>
@@ -249,12 +249,12 @@ const ResultsDashboard = ({ results }) => {
   };
 
   return (
-    <div className="flex-col animate-fade-in" style={{ gap: '4rem', padding: '2rem 0', width: '100%', maxWidth: '1200px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>
+    <div className="results-wrap flex-col animate-fade-in" style={{ gap: '2.2rem', padding: '0.6rem 0 1.2rem', width: '100%', maxWidth: '1200px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+        <h1 style={{ fontSize: '2.8rem', marginBottom: '0.5rem', lineHeight: '1.1' }}>
           Your <span className="text-gradient">GLOWBAL</span> Match Report
         </h1>
-        <p style={{ fontSize: '1.1rem', color: 'var(--glowbal-silver)' }}>
+        <p style={{ fontSize: '1rem', color: 'var(--glowbal-silver)' }}>
           Ranked options by competitiveness, with transparent fit signals from your answers.
         </p>
       </div>

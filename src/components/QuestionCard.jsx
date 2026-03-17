@@ -32,7 +32,7 @@ const QuestionCard = ({ question, index, total, onNext }) => {
   };
 
   return (
-    <div className={`glass-panel p-8 w-full max-w-[800px] flex-col ${animate ? 'animate-slide-in' : ''}`} style={{ padding: '3rem' }}>
+    <div className={`question-card glass-panel p-8 w-full max-w-[800px] flex-col ${animate ? 'animate-slide-in' : ''}`} style={{ padding: '2rem 2.1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: 'var(--glowbal-mint)' }}>
         <span style={{ fontWeight: 600, fontSize: '0.9rem', letterSpacing: '2px', textTransform: 'uppercase' }}>
           Question {index + 1} of {total}
@@ -42,11 +42,11 @@ const QuestionCard = ({ question, index, total, onNext }) => {
         </span>
       </div>
       
-      <h2 style={{ fontSize: '2.5rem', marginBottom: '3rem', lineHeight: '1.2' }}>
+      <h2 style={{ fontSize: '2.05rem', marginBottom: '1.6rem', lineHeight: '1.2' }}>
         {question.text}
       </h2>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
         {question.options.map((opt, i) => {
           const isSelected = selected.includes(opt);
           return (
@@ -55,8 +55,8 @@ const QuestionCard = ({ question, index, total, onNext }) => {
               className={`btn-secondary ${isSelected ? 'btn-selected' : ''}`}
               style={{ 
                 textAlign: 'left', 
-                padding: '1.25rem 2rem', 
-                fontSize: '1.1rem',
+                padding: '0.95rem 1.4rem', 
+                fontSize: '1rem',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',

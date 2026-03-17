@@ -5,6 +5,7 @@ import ResultsDashboard from './components/ResultsDashboard';
 import { processCV, generateResults } from './services/aiMockService';
 import { trackEvent } from './services/analytics';
 import { Loader2 } from 'lucide-react';
+import AmbientBackground from './components/AmbientBackground';
 import './index.css';
 
 const STATES = {
@@ -70,7 +71,7 @@ function App() {
   };
 
   const renderHeader = () => (
-    <div className="hero-shell" style={{ height: currentState === STATES.IDLE ? '60vh' : '20vh' }}>
+    <div className="hero-shell" style={{ height: currentState === STATES.IDLE ? '44vh' : '16vh', minHeight: currentState === STATES.IDLE ? '300px' : '120px', maxHeight: currentState === STATES.IDLE ? '460px' : '190px' }}>
       <div className="hero-fallback" aria-hidden="true">
         <div className="hero-fallback-brand">GLOWBAL ✦</div>
       </div>
@@ -91,10 +92,11 @@ function App() {
         </video>
       )}
 
+      <AmbientBackground density={currentState === STATES.IDLE ? 'hero' : 'compact'} />
       <div className="hero-overlay" />
       
       <header style={{ 
-        padding: '2rem 5%', 
+        padding: currentState === STATES.IDLE ? '1.25rem 5%' : '1rem 5%', 
         display: 'flex', 
         justifyContent: 'center',
         position: 'relative',
@@ -104,7 +106,7 @@ function App() {
         borderBottom: currentState !== STATES.IDLE ? '1px solid rgba(0,0,0,0.08)' : 'none'
       }}>
         <div 
-          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', transform: currentState === STATES.IDLE ? 'scale(1.5)' : 'scale(1)', transition: 'all 0.5s ease', marginTop: currentState === STATES.IDLE ? '-5vh' : '0' }}
+          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', transform: currentState === STATES.IDLE ? 'scale(1.3)' : 'scale(1)', transition: 'all 0.5s ease', marginTop: currentState === STATES.IDLE ? '-2vh' : '0' }}
           onClick={() => {
             if (currentState !== STATES.ANALYZING_CV && currentState !== STATES.ANALYZING_ANSWERS) {
                setCurrentState(STATES.IDLE);
@@ -157,10 +159,11 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen flex-col">
+    <div className="min-h-screen flex-col app-shell">
+      <AmbientBackground density="page" />
       {renderHeader()}
       
-      <main className="container flex-col flex-center" style={{ flex: 1, padding: '2rem 0' }}>
+      <main className="container flex-col flex-center content-layer" style={{ flex: 1, padding: '1.1rem 0 1.5rem' }}>
         {currentState === STATES.IDLE && (
           <HeroUpload onUpload={handleCVUpload} />
         )}
