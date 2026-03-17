@@ -142,7 +142,8 @@ const ResultsDashboard = ({ results }) => {
     if (!selected.length) return;
 
     const content = selected.map((item) => {
-      return `${item.name} (${item.location})\n- ${item.desc}\n- ${item.why.join('\n- ')}\n- ${item.link}`;
+      const reasons = (item.matchReasons || item.why || []).join('\n- ');
+      return `${item.name} (${item.location})\n- ${item.desc}\n- ${reasons}\n- ${item.link}`;
     }).join('\n\n');
 
     const blob = new Blob([`GlowBal Shortlist\n\n${content}`], { type: 'text/plain;charset=utf-8' });
