@@ -39,3 +39,23 @@ Date: 2026-03-17
 
 - Existing parser-related flow in `App.jsx` was kept intact and integrated with improved state UX.
 - No git conflicts encountered during this pass.
+
+## Match Report UX Redesign (Amazon-like browsing)
+
+### Before
+- Report was long-scroll with large cards, comparison table, and modal controls competing for attention.
+- Reach/Target/Safety existed as separate stacked sections rather than a quick browse surface.
+- Detail-level info was repeated across cards, increasing visual clutter.
+- Shortlist/export controls were prominent and interrupted scanning.
+
+### After
+- Added a calm top report heading + compact menu bar with source and lightweight shortlist status.
+- Introduced a desktop-first 3-column browse layout (Reach, Target, Safety), each showing 2 compact image-first cards.
+- Clicking a card now drives a dedicated detail panel with:
+  - larger image
+  - university name, location, official link
+  - concise description
+  - "Why this fits you / CV" bullets
+  - metadata chips (cost band, competitiveness, subject fit)
+- Shortlist capability is preserved but visually de-emphasized (small card bookmark + subtle detail button).
+- Added responsive behavior to stack columns and detail panel cleanly on smaller screens.
