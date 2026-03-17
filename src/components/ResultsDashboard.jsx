@@ -6,198 +6,138 @@ import {
   Anchor,
   Info,
   BookmarkPlus,
-  Download,
   CheckCircle2,
-  Scale,
-  X,
-  FileWarning,
-  ArrowRight
+  ArrowRight,
+  Download,
+  Bookmark
 } from 'lucide-react';
 import { trackEvent } from '../services/analytics';
 
-const TierSection = ({ title, description, icon, color, items, shortlist, onToggleShortlist, onExport }) => {
-  const TierIcon = icon;
+const TIER_CONFIG = [
+  {
+    key: 'High',
+    label: 'Reach',
+    icon: Flame,
+    color: 'var(--glowbal-pink)',
+    description: 'Ambitious options with strong upside.'
+  },
+  {
+    key: 'Medium',
+    label: 'Target',
+    icon: Target,
+    color: 'var(--glowbal-mint)',
+    description: 'Balanced fits for your current profile.'
+  },
+  {
+    key: 'Low',
+    label: 'Safety',
+    icon: Anchor,
+    color: 'var(--glowbal-silver)',
+    description: 'Lower-risk options for resilience.'
+  }
+];
+
+const metaLabel = {
+  budgetBand: 'Cost band',
+  competitiveness: 'Competitiveness',
+  subjectStrength: 'Subject fit'
+};
+
+const shortText = (value = '', max = 170) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
+
+const UniversityImage = ({ item, className }) => {
+  const sources = useMemo(() => {
+    const list = [item?.image, ...(item?.imageCandidates || []), item?.imageFallback || '/images/university-placeholder.svg'];
+    return [...new Set(list.filter(Boolean))];
+  }, [item]);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [sources]);
 
   return (
-    <section className="results-section glass-panel animate-slide-in">
-      <div className="results-section-head" style={{ borderBottomColor: color }}>
-        <div className="results-section-title-wrap">
-          <TierIcon size={24} color={color} />
-          <h2>{title}</h2>
+    <img
+      src={sources[Math.min(index, sources.length - 1)]}
+      alt={item?.name || 'University image'}
+      className={className}
+      loading="lazy"
+      onError={() => {
+        setIndex((prev) => (prev < sources.length - 1 ? prev + 1 : prev));
+      }}
+    />
+  );
+};
+
+const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
+  if (!item) return null;
+
+  const reasons = item.matchReasons || item.why || [];
+  const metadata = [
+    [metaLabel.budgetBand, item.budgetBand],
+    [metaLabel.competitiveness, item.competitiveness],
+    [metaLabel.subjectStrength, Array.isArray(item.subjectStrength) ? item.subjectStrength.slice(0, 3).join(' · ') : item.subjectStrength]
+  ].filter(([, value]) => Boolean(value));
+
+  return (
+    <section className="glass-panel report-detail-panel animate-fade-in">
+      <UniversityImage item={item} className="report-detail-image" />
+      <div className="report-detail-body">
+        <div className="report-detail-head">
+          <div>
+            <h2>{item.name}</h2>
+            <p>{item.location}</p>
+          </div>
+          <button className="btn-secondary report-shortlist-btn" onClick={() => onToggleShortlist(item)}>
+            {shortlisted ? <><CheckCircle2 size={15} /> Shortlisted</> : <><BookmarkPlus size={15} /> Shortlist</>}
+          </button>
         </div>
-        <p>{description}</p>
-      </div>
 
-      <div className="results-grid">
-        {items.map((item) => {
-          const isShortlisted = shortlist.has(item.id);
-          return (
-            <article key={item.id} className="result-card glass-panel">
-              <img src={item.image} alt={item.name} className="result-image" />
+        <p className="report-detail-description">{shortText(item.desc, 230)}</p>
 
-              <div className="result-body">
-                <div>
-                  <h3>{item.name}</h3>
-                  <p className="result-location">{item.location}</p>
-                  <p className="result-summary">{item.desc}</p>
-                </div>
+        {!!reasons.length && (
+          <div className="match-why-card report-why-card">
+            <div className="result-why-head">
+              <Info size={15} color="var(--glowbal-mint)" />
+              <p>Why this fits you / CV</p>
+            </div>
+            <ul>
+              {reasons.slice(0, 4).map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-                <div className="match-why-card">
-                  <div className="result-why-head">
-                    <Info size={15} color="var(--glowbal-mint)" />
-                    <p>Why this match</p>
-                  </div>
-                  <ul>
-                    {(item.matchReasons || item.why || []).map((reason) => (
-                      <li key={reason}>{reason}</li>
-                    ))}
-                  </ul>
-                </div>
+        {!!metadata.length && (
+          <div className="report-meta-row">
+            {metadata.map(([label, value]) => (
+              <span className="report-meta-pill" key={label}><strong>{label}:</strong> {value}</span>
+            ))}
+          </div>
+        )}
 
-                <div className="result-actions">
-                  <button className="btn-secondary" onClick={() => onToggleShortlist(item)}>
-                    {isShortlisted ? <><CheckCircle2 size={16} /> Shortlisted</> : <><BookmarkPlus size={16} /> Add to shortlist</>}
-                  </button>
-                  <button className="btn-secondary" onClick={() => onExport(item)}>
-                    <Download size={16} /> Export brief
-                  </button>
-                  <a href={item.link} target="_blank" rel="noopener noreferrer" className="btn-primary result-link-cta">
-                    View programme <ExternalLink size={16} />
-                  </a>
-                </div>
-              </div>
-            </article>
-          );
-        })}
+        <div className="report-detail-actions">
+          <a href={item.link} target="_blank" rel="noopener noreferrer" className="btn-primary result-link-cta">
+            Official programme link <ExternalLink size={16} />
+          </a>
+          <button className="btn-secondary" onClick={() => onExport(item)}>
+            <Download size={15} /> Export brief
+          </button>
+        </div>
       </div>
     </section>
   );
 };
 
-const ComparisonTable = ({ items }) => {
-  if (!items.length) {
-    return (
-      <div className="results-empty">
-        <FileWarning size={18} color="var(--glowbal-silver)" />
-        <p>Select up to 3 universities from your shortlist to unlock side-by-side comparison.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ overflowX: 'auto' }}>
-      <table className="comparison-table">
-        <thead>
-          <tr>
-            <th>Criteria</th>
-            {items.map((item) => (
-              <th key={item.id}>{item.name}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {[
-            ['Location', (item) => item.location],
-            ['Summary', (item) => item.desc],
-            ['Website', (item) => <a href={item.link} target="_blank" rel="noopener noreferrer">Open programme</a>]
-          ].map(([label, getter]) => (
-            <tr key={label}>
-              <td>{label}</td>
-              {items.map((item) => (
-                <td key={`${label}-${item.id}`}>{getter(item)}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-const LeadModal = ({ isOpen, onClose, shortlistItems }) => {
-  const initial = { name: '', email: '', intake: '', budget: '', notes: '' };
-  const [form, setForm] = useState(initial);
-  const [errors, setErrors] = useState({});
-
-  if (!isOpen) return null;
-
-  const close = () => {
-    setForm(initial);
-    setErrors({});
-    onClose();
-  };
-
-  const validate = () => {
-    const next = {};
-    if (!form.name.trim()) next.name = 'Required';
-    if (!form.email.trim()) next.email = 'Required';
-    else if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'Invalid email';
-    if (!form.intake.trim()) next.intake = 'Required';
-    if (!form.budget.trim()) next.budget = 'Required';
-    setErrors(next);
-    return !Object.keys(next).length;
-  };
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    const payload = {
-      submittedAt: new Date().toISOString(),
-      lead: form,
-      shortlistedUniversities: shortlistItems.map(({ id, name, location, link }) => ({ id, name, location, link }))
-    };
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `glowbal-lead-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    trackEvent('lead_form_submit', { shortlistCount: shortlistItems.length, intake: form.intake });
-    close();
-  };
-
-  const inputStyle = { width: '100%', padding: '0.7rem 0.9rem', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.12)' };
-
-  return (
-    <div className="results-modal-overlay" onClick={close}>
-      <div className="glass-panel results-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="results-modal-head">
-          <h3>Share shortlist details</h3>
-          <button className="btn-secondary" onClick={close} style={{ padding: '0.4rem 0.7rem' }}><X size={16} /></button>
-        </div>
-        <form onSubmit={submit} className="results-form-grid">
-          {[['name', 'Name'], ['email', 'Email'], ['intake', 'Preferred intake'], ['budget', 'Budget']].map(([key, label]) => (
-            <label key={key} style={{ display: 'grid', gap: '0.25rem' }}>
-              <span style={{ fontWeight: 600 }}>{label}</span>
-              <input style={inputStyle} value={form[key]} onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))} />
-              {errors[key] && <small style={{ color: 'var(--glowbal-pink)' }}>{errors[key]}</small>}
-            </label>
-          ))}
-          <label style={{ display: 'grid', gap: '0.25rem' }}>
-            <span style={{ fontWeight: 600 }}>Notes</span>
-            <textarea rows={4} style={inputStyle} value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} />
-          </label>
-          <div className="results-modal-actions">
-            <button type="button" className="btn-secondary" onClick={close}>Cancel</button>
-            <button type="submit" className="btn-primary"><Download size={16} /> Download JSON</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 const ResultsDashboard = ({ results }) => {
   const [shortlist, setShortlist] = useState(new Set());
-  const [leadOpen, setLeadOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   const allResults = useMemo(() => [...results.High, ...results.Medium, ...results.Low], [results]);
   const shortlistItems = useMemo(() => allResults.filter((item) => shortlist.has(item.id)), [allResults, shortlist]);
-  const compareItems = shortlistItems.slice(0, 3);
+
+  const selectedItem = useMemo(() => allResults.find((item) => item.id === selectedId) || allResults[0], [allResults, selectedId]);
 
   const toggleShortlist = (item) => {
     setShortlist((prev) => {
@@ -235,47 +175,119 @@ const ResultsDashboard = ({ results }) => {
     URL.revokeObjectURL(url);
   };
 
+  const exportShortlist = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      shortlistedUniversities: shortlistItems.map(({ id, name, location, link, budgetBand, competitiveness, subjectStrength }) => ({
+        id,
+        name,
+        location,
+        link,
+        budgetBand,
+        competitiveness,
+        subjectStrength
+      }))
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `glowbal-shortlist-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="results-wrap flex-col animate-fade-in">
-      <header className="results-header">
+      <header className="results-header report-header">
         <h1>Your <span className="text-gradient">GlowBal</span> match report</h1>
-        <p>Review your recommended universities, shortlist your preferred options, then export a clean report.</p>
-        <p style={{ fontSize: '0.85rem', color: 'var(--glowbal-silver)' }}>Data source: {results.source === 'live' ? 'Live public API' : results.source === 'live+fallback' ? 'Live API + fallback cache' : 'Fallback cache'}</p>
+        <p>Browse Reach, Target and Safety picks in a clean view. Select any card to open full details below.</p>
       </header>
 
-      <section className="glass-panel results-shortlist-bar">
-        <div>
-          <p className="results-shortlist-count">Shortlisted: <strong>{shortlistItems.length}</strong></p>
-          <p className="results-shortlist-help">You can compare up to 3 universities at once.</p>
+      <section className="glass-panel report-menu-bar">
+        <p style={{ fontSize: '0.85rem', color: 'var(--glowbal-silver)' }}>
+          Data source: {results.source === 'live' ? 'Live public API' : results.source === 'live+fallback' ? 'Live API + fallback cache' : 'Fallback cache'}
+        </p>
+        <div className="report-menu-actions">
+          <span className="report-shortlist-chip"><Bookmark size={14} /> {shortlistItems.length} shortlisted</span>
+          <button className="btn-secondary" onClick={exportShortlist} disabled={shortlistItems.length === 0}>
+            <Download size={15} /> Export shortlist
+          </button>
         </div>
-        <button className="btn-primary" onClick={() => setLeadOpen(true)} disabled={shortlistItems.length === 0}>
-          <Download size={16} /> Export shortlist report
-        </button>
       </section>
 
-      <section className="glass-panel results-section">
-        <div className="results-section-head" style={{ borderBottomColor: 'rgba(0,0,0,0.1)' }}>
-          <div className="results-section-title-wrap">
-            <Scale size={18} color="var(--glowbal-pink)" />
-            <h2>Comparison</h2>
-          </div>
-          <p>Quickly scan your top shortlisted options side by side.</p>
-        </div>
-        {shortlistItems.length > 3 && <p className="results-warning">Showing first 3 of {shortlistItems.length} shortlisted options.</p>}
-        <ComparisonTable items={compareItems} />
+      <section className="report-columns" aria-label="University recommendation columns">
+        {TIER_CONFIG.map(({ key, label, description, icon: TierIcon, color }) => {
+          const tierItems = (results[key] || []).slice(0, 2);
+          return (
+            <article className="glass-panel report-tier-column" key={key}>
+              <header className="report-tier-head" style={{ borderBottomColor: color }}>
+                <div className="results-section-title-wrap">
+                  <TierIcon size={18} color={color} />
+                  <h2>{label}</h2>
+                </div>
+                <p>{description}</p>
+              </header>
+
+              <div className="report-tier-cards">
+                {tierItems.map((item) => {
+                  const active = selectedItem?.id === item.id;
+                  const isShortlisted = shortlist.has(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      className={`report-compact-card ${active ? 'is-active' : ''}`}
+                      onClick={() => setSelectedId(item.id)}
+                    >
+                      <UniversityImage item={item} className="report-compact-image" />
+                      <div className="report-compact-body">
+                        <div>
+                          <h3>{item.name}</h3>
+                          <p>{item.location}</p>
+                        </div>
+                        <span className="report-score-pill">Match {item.score}%</span>
+                      </div>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className={`report-card-bookmark ${isShortlisted ? 'is-on' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleShortlist(item);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleShortlist(item);
+                          }
+                        }}
+                        aria-label={isShortlisted ? `Remove ${item.name} from shortlist` : `Add ${item.name} to shortlist`}
+                      >
+                        <Bookmark size={14} />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </article>
+          );
+        })}
       </section>
 
-      <TierSection title="Reach" description="Ambitious options with lower admission probability and high upside." icon={Flame} color="var(--glowbal-pink)" items={results.High} shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
-      <TierSection title="Target" description="Balanced options aligned with your current profile and preferences." icon={Target} color="var(--glowbal-mint)" items={results.Medium} shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
-      <TierSection title="Safety" description="Lower-risk options to keep your admissions strategy resilient." icon={Anchor} color="var(--glowbal-silver)" items={results.Low} shortlist={shortlist} onToggleShortlist={toggleShortlist} onExport={exportItem} />
+      <DetailPanel
+        item={selectedItem}
+        shortlisted={selectedItem ? shortlist.has(selectedItem.id) : false}
+        onToggleShortlist={toggleShortlist}
+        onExport={exportItem}
+      />
 
       <div className="results-footer-cta">
         <button className="btn-primary" onClick={() => window.location.reload()}>
           Start a new matching run <ArrowRight size={16} />
         </button>
       </div>
-
-      <LeadModal isOpen={leadOpen} onClose={() => setLeadOpen(false)} shortlistItems={shortlistItems} />
     </div>
   );
 };

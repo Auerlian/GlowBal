@@ -39,17 +39,79 @@ const REGION_TO_COUNTRIES = {
   Oceania: ['Australia']
 };
 
+const LOCAL_IMAGE_FALLBACK = '/images/university-placeholder.svg';
+
 const FALLBACK_UNIVERSITIES = [
-  { name: 'University of Oxford', country: 'United Kingdom', domain: 'ox.ac.uk', link: 'https://www.ox.ac.uk/' },
-  { name: 'University of Cambridge', country: 'United Kingdom', domain: 'cam.ac.uk', link: 'https://www.cam.ac.uk/' },
-  { name: 'Massachusetts Institute of Technology', country: 'United States', domain: 'mit.edu', link: 'https://www.mit.edu/' },
-  { name: 'Stanford University', country: 'United States', domain: 'stanford.edu', link: 'https://www.stanford.edu/' },
-  { name: 'University of Toronto', country: 'Canada', domain: 'utoronto.ca', link: 'https://www.utoronto.ca/' },
-  { name: 'University of Melbourne', country: 'Australia', domain: 'unimelb.edu.au', link: 'https://www.unimelb.edu.au/' },
-  { name: 'Technical University of Munich', country: 'Germany', domain: 'tum.de', link: 'https://www.tum.de/' },
-  { name: 'École Polytechnique', country: 'France', domain: 'polytechnique.edu', link: 'https://www.polytechnique.edu/' },
-  { name: 'National University of Singapore', country: 'Singapore', domain: 'nus.edu.sg', link: 'https://www.nus.edu.sg/' },
-  { name: 'University of Tokyo', country: 'Japan', domain: 'u-tokyo.ac.jp', link: 'https://www.u-tokyo.ac.jp/en/' }
+  {
+    name: 'University of Oxford',
+    country: 'United Kingdom',
+    domain: 'ox.ac.uk',
+    link: 'https://www.ox.ac.uk/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Radcliffe_Camera%2C_Oxford_-_Oct_2006.jpg/1280px-Radcliffe_Camera%2C_Oxford_-_Oct_2006.jpg'
+  },
+  {
+    name: 'University of Cambridge',
+    country: 'United Kingdom',
+    domain: 'cam.ac.uk',
+    link: 'https://www.cam.ac.uk/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/King%27s_College_Chapel%2C_Cambridge%2C_UK_-_Diliff.jpg/1280px-King%27s_College_Chapel%2C_Cambridge%2C_UK_-_Diliff.jpg'
+  },
+  {
+    name: 'Massachusetts Institute of Technology',
+    country: 'United States',
+    domain: 'mit.edu',
+    link: 'https://www.mit.edu/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_Dome_night1.jpg/1280px-MIT_Dome_night1.jpg'
+  },
+  {
+    name: 'Stanford University',
+    country: 'United States',
+    domain: 'stanford.edu',
+    link: 'https://www.stanford.edu/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Stanford_Memorial_Church_2011.jpg/1280px-Stanford_Memorial_Church_2011.jpg'
+  },
+  {
+    name: 'University of Toronto',
+    country: 'Canada',
+    domain: 'utoronto.ca',
+    link: 'https://www.utoronto.ca/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/University_College%2C_University_of_Toronto_%282015%29_-_2.jpg/1280px-University_College%2C_University_of_Toronto_%282015%29_-_2.jpg'
+  },
+  {
+    name: 'University of Melbourne',
+    country: 'Australia',
+    domain: 'unimelb.edu.au',
+    link: 'https://www.unimelb.edu.au/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Old_Arts_Building%2C_University_of_Melbourne.jpg/1280px-Old_Arts_Building%2C_University_of_Melbourne.jpg'
+  },
+  {
+    name: 'Technical University of Munich',
+    country: 'Germany',
+    domain: 'tum.de',
+    link: 'https://www.tum.de/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/TUM_Stammgelaende_2012.jpg/1280px-TUM_Stammgelaende_2012.jpg'
+  },
+  {
+    name: 'École Polytechnique',
+    country: 'France',
+    domain: 'polytechnique.edu',
+    link: 'https://www.polytechnique.edu/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/%C3%89cole_polytechnique_-_Palaiseau.jpg/1280px-%C3%89cole_polytechnique_-_Palaiseau.jpg'
+  },
+  {
+    name: 'National University of Singapore',
+    country: 'Singapore',
+    domain: 'nus.edu.sg',
+    link: 'https://www.nus.edu.sg/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/NUS_University_Hall.jpg/1280px-NUS_University_Hall.jpg'
+  },
+  {
+    name: 'University of Tokyo',
+    country: 'Japan',
+    domain: 'u-tokyo.ac.jp',
+    link: 'https://www.u-tokyo.ac.jp/en/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Yasuda_Auditorium_-_Tokyo_University_03.jpg/1280px-Yasuda_Auditorium_-_Tokyo_University_03.jpg'
+  }
 ];
 
 const slugify = (value = '') => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -73,14 +135,60 @@ const inferSubjectStrength = (name = '') => {
   return [...tags];
 };
 
+const isHttpUrl = (value = '') => /^https?:\/\//i.test(value);
+
+const normalizeDomain = (domain = '') => domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim().toLowerCase();
+
+const normalizeOfficialLink = (link, domain) => {
+  const normalizedDomain = normalizeDomain(domain);
+  const safeLink = isHttpUrl(link) ? link : `https://${link || normalizedDomain}`;
+
+  try {
+    const parsed = new URL(safeLink);
+    const host = normalizeDomain(parsed.hostname);
+    if (normalizedDomain && host !== normalizedDomain && !host.endsWith(`.${normalizedDomain}`)) {
+      return `https://${normalizedDomain}/`;
+    }
+    return safeLink;
+  } catch {
+    return normalizedDomain ? `https://${normalizedDomain}/` : null;
+  }
+};
+
+const getClearbitLogoUrl = (domain) => `https://logo.clearbit.com/${normalizeDomain(domain)}`;
+
+const getWikimediaImage = async (name) => {
+  const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
+
+  try {
+    const res = await fetch(endpoint, {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    if (data?.type === 'disambiguation') return null;
+    const image = data?.originalimage?.source || data?.thumbnail?.source || null;
+    if (!isHttpUrl(image)) return null;
+
+    return image;
+  } catch {
+    return null;
+  }
+};
+
 const normalizeInstitution = (item) => {
   const country = item.country || item.alpha_two_code || 'Unknown';
-  const link = (item.web_pages && item.web_pages[0]) || item.link || null;
   const domain = (item.domains && item.domains[0]) || item.domain || null;
+  const explicitImage = item.image || item.image_url || null;
+  if (!domain || !item.name) return null;
 
-  if (!link || !domain || !item.name) return null;
+  const link = normalizeOfficialLink((item.web_pages && item.web_pages[0]) || item.link || null, domain);
+  if (!link) return null;
 
-  const safeLink = link.startsWith('http') ? link : `https://${link}`;
   const region = COUNTRY_REGION[country] || 'Global';
 
   return {
@@ -88,9 +196,10 @@ const normalizeInstitution = (item) => {
     name: item.name,
     location: country,
     country,
+    domain: normalizeDomain(domain),
     region,
-    image: `https://logo.clearbit.com/${domain}`,
-    link: safeLink,
+    explicitImage: isHttpUrl(explicitImage) ? explicitImage : null,
+    link,
     desc: `${item.name} (${country}) with publicly available programme information and admissions guidance.`,
     budgetBand: COUNTRY_BUDGET_BAND[country] || 'medium',
     subjectStrength: inferSubjectStrength(item.name),
@@ -101,6 +210,36 @@ const normalizeInstitution = (item) => {
     socialScene: 'moderate',
     partTimeFriendly: 'experience',
     degreeLevels: ['Undergraduate (Bachelors)', 'Postgraduate (Masters)', 'Doctorate (PhD)', 'Short Course/Certificate']
+  };
+};
+
+const addImageData = async (institution) => {
+  const candidates = [];
+  let imageSource = 'placeholder';
+
+  if (institution.explicitImage) {
+    candidates.push(institution.explicitImage);
+    imageSource = 'explicit';
+  } else {
+    const wikiImage = await getWikimediaImage(institution.name);
+    if (wikiImage) {
+      candidates.push(wikiImage);
+      imageSource = 'wikimedia';
+    }
+  }
+
+  const clearbit = getClearbitLogoUrl(institution.domain);
+  candidates.push(clearbit);
+  candidates.push(LOCAL_IMAGE_FALLBACK);
+
+  const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
+
+  return {
+    ...institution,
+    image: uniqueCandidates[0] || LOCAL_IMAGE_FALLBACK,
+    imageCandidates: uniqueCandidates,
+    imageFallback: LOCAL_IMAGE_FALLBACK,
+    imageSource
   };
 };
 
@@ -130,23 +269,26 @@ const selectCountries = (answers = {}) => {
   return [...new Set(countries)].slice(0, 5);
 };
 
+const withImagePipeline = async (institutions = []) => Promise.all(institutions.map(addImageData));
+
 export const getUniversityCandidates = async (answers = {}) => {
   const countries = selectCountries(answers);
 
   try {
     const liveBatches = await Promise.all(countries.map((country) => fetchByCountry(country)));
-    const live = uniqueById(liveBatches.flat().map(normalizeInstitution)).slice(0, 30);
+    const normalizedLive = uniqueById(liveBatches.flat().map(normalizeInstitution));
+    const live = (await withImagePipeline(normalizedLive)).slice(0, 30);
 
     if (live.length >= 6) {
       return { source: 'live', universities: live };
     }
 
-    const fallback = uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution));
+    const fallback = await withImagePipeline(uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution)));
     return { source: 'live+fallback', universities: uniqueById([...live, ...fallback]).slice(0, 30) };
   } catch {
     return {
       source: 'fallback',
-      universities: uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution))
+      universities: await withImagePipeline(uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution)))
     };
   }
 };

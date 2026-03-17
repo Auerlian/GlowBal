@@ -1,0 +1,18 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E1726"/>
+      <stop offset="1" stop-color="#1D2A44"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="335" y1="190" x2="865" y2="485" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect x="100" y="80" width="1000" height="515" rx="28" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.14)"/>
+  <path d="M600 170L290 305L600 440L910 305L600 170Z" fill="url(#accent)" fill-opacity="0.85"/>
+  <path d="M395 357V448C395 493 486 530 600 530C714 530 805 493 805 448V357" stroke="#D6E4FF" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="600" cy="305" r="26" fill="#D6E4FF"/>
+  <text x="600" y="595" fill="#D6E4FF" font-family="Inter, Arial, sans-serif" font-size="34" text-anchor="middle" opacity="0.95">GlowBal University Profile</text>
+</svg>
