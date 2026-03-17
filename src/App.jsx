@@ -19,6 +19,7 @@ const STATES = {
 function App() {
   const [currentState, setCurrentState] = useState(STATES.IDLE);
   const [logoVideoFailed, setLogoVideoFailed] = useState(false);
+  const [logoOpacity, setLogoOpacity] = useState(1);
   const logoVideoSrc = `${import.meta.env.BASE_URL}Rotating_Globe_Video_for_Website.mp4`;
 
   const [questions, setQuestions] = useState([]);
@@ -75,6 +76,29 @@ function App() {
     }
   };
 
+  const handleLogoVideoTimeUpdate = (event) => {
+    const video = event.currentTarget;
+    const { currentTime, duration } = video;
+
+    if (!duration || Number.isNaN(duration)) {
+      setLogoOpacity(1);
+      return;
+    }
+
+    const fadeWindow = 1; // seconds at start/end
+    if (currentTime <= fadeWindow) {
+      setLogoOpacity(Math.max(0, currentTime / fadeWindow));
+      return;
+    }
+
+    if (currentTime >= duration - fadeWindow) {
+      setLogoOpacity(Math.max(0, (duration - currentTime) / fadeWindow));
+      return;
+    }
+
+    setLogoOpacity(1);
+  };
+
   const renderHeader = () => (
     <header className="topbar content-layer">
       <button className="brand-button" onClick={goHome} aria-label="Go to GlowBal home">
@@ -86,6 +110,12 @@ function App() {
             playsInline
             preload="metadata"
             className="brand-video"
+            style={{ opacity: logoOpacity }}
+            onLoadedMetadata={(e) => {
+              const duration = e.currentTarget.duration || 0;
+              setLogoOpacity(duration > 0 ? 0 : 1);
+            }}
+            onTimeUpdate={handleLogoVideoTimeUpdate}
             onError={() => setLogoVideoFailed(true)}
           >
             <source src={logoVideoSrc} type="video/mp4" />

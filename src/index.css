@@ -389,18 +389,18 @@ h1, h2, h3, h4, h5, h6 {
 
 .brand-video,
 .brand-fallback {
-  width: 62px;
-  height: 62px;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+  width: 72px;
+  height: 72px;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
 
 .brand-video {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   display: block;
-  animation: logoFadePulse 4s ease-in-out infinite;
+  transition: opacity 120ms linear;
 }
 
 .brand-fallback {
