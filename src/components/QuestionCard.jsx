@@ -29,6 +29,7 @@ const QuestionCard = ({ question, index, total, savedAnswer = [], onNext, onBack
             return (
               <button
                 key={i}
+                type="button"
                 className={`btn-secondary question-option ${isSelected ? 'btn-selected' : ''}`}
                 style={{ animationDelay: `${i * 100}ms` }}
                 onClick={() => toggleOption(opt)}
@@ -40,15 +41,15 @@ const QuestionCard = ({ question, index, total, savedAnswer = [], onNext, onBack
           })}
         </div>
 
-        <div className="question-next-row" style={{ justifyContent: canGoBack ? 'space-between' : 'flex-end' }}>
+        <div className={`question-next-row ${canGoBack ? '' : 'question-next-row--single'}`}>
           {canGoBack && (
-            <button className="btn-secondary" onClick={onBack}>
+            <button type="button" className="btn-secondary question-back-btn" onClick={onBack}>
               <ChevronLeft size={18} /> Back
             </button>
           )}
           <button
-            className={`btn-primary ${selected.length === 0 ? 'disabled' : ''}`}
-            style={{ opacity: selected.length === 0 ? 0.5 : 1, cursor: selected.length === 0 ? 'not-allowed' : 'pointer' }}
+            type="button"
+            className="btn-primary question-next-btn"
             onClick={() => selected.length > 0 && onNext(question.id, selected)}
             disabled={selected.length === 0}
           >

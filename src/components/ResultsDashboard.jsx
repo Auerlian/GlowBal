@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   ExternalLink,
   Target,
@@ -45,29 +45,18 @@ const metaLabel = {
 
 const shortText = (value = '', max = 170) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
 
-const UniversityImage = ({ item, className }) => {
-  const sources = useMemo(() => {
-    const list = [item?.image, ...(item?.imageCandidates || []), item?.imageFallback || '/images/university-placeholder.svg'];
-    return [...new Set(list.filter(Boolean))];
-  }, [item]);
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    setIndex(0);
-  }, [sources]);
-
-  return (
-    <img
-      src={sources[Math.min(index, sources.length - 1)]}
-      alt={item?.name || 'University image'}
-      className={className}
-      loading="lazy"
-      onError={() => {
-        setIndex((prev) => (prev < sources.length - 1 ? prev + 1 : prev));
-      }}
-    />
-  );
-};
+const UniversityImage = ({ item, className }) => (
+  <img
+    src={item?.image || item?.imageFallback || '/images/university-placeholder.svg'}
+    alt={item?.name || 'University image'}
+    className={className}
+    loading="lazy"
+    onError={(e) => {
+      e.currentTarget.onerror = null;
+      e.currentTarget.src = '/images/university-placeholder.svg';
+    }}
+  />
+);
 
 const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
   if (!item) return null;
@@ -133,6 +122,7 @@ const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
 const ResultsDashboard = ({ results }) => {
   const [shortlist, setShortlist] = useState(new Set());
   const [selectedId, setSelectedId] = useState(null);
+  const detailRef = useRef(null);
 
   const allResults = useMemo(() => [...results.High, ...results.Medium, ...results.Low], [results]);
   const shortlistItems = useMemo(() => allResults.filter((item) => shortlist.has(item.id)), [allResults, shortlist]);
@@ -151,6 +141,15 @@ const ResultsDashboard = ({ results }) => {
       }
       return next;
     });
+  };
+
+  const handleSelectItem = (itemId) => {
+    setSelectedId(itemId);
+    if (window.innerWidth <= 900 && detailRef.current) {
+      requestAnimationFrame(() => {
+        detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
   };
 
   const exportItem = (item) => {
@@ -218,13 +217,13 @@ const ResultsDashboard = ({ results }) => {
       </section>
 
       <section className="report-columns" aria-label="University recommendation columns">
-        {TIER_CONFIG.map(({ key, label, description, icon: TierIcon, color }) => {
+        {TIER_CONFIG.map(({ key, label, description, icon: TierGlyph, color }) => {
           const tierItems = (results[key] || []).slice(0, 2);
           return (
             <article className="glass-panel report-tier-column" key={key}>
               <header className="report-tier-head" style={{ borderBottomColor: color }}>
                 <div className="results-section-title-wrap">
-                  <TierIcon size={18} color={color} />
+                  {React.createElement(TierGlyph, { size: 18, color })}
                   <h2>{label}</h2>
                 </div>
                 <p>{description}</p>
@@ -238,7 +237,7 @@ const ResultsDashboard = ({ results }) => {
                     <button
                       key={item.id}
                       className={`report-compact-card ${active ? 'is-active' : ''}`}
-                      onClick={() => setSelectedId(item.id)}
+                      onClick={() => handleSelectItem(item.id)}
                     >
                       <UniversityImage item={item} className="report-compact-image" />
                       <div className="report-compact-body">
@@ -276,12 +275,14 @@ const ResultsDashboard = ({ results }) => {
         })}
       </section>
 
-      <DetailPanel
-        item={selectedItem}
-        shortlisted={selectedItem ? shortlist.has(selectedItem.id) : false}
-        onToggleShortlist={toggleShortlist}
-        onExport={exportItem}
-      />
+      <section ref={detailRef} className="report-detail-anchor" aria-label="Selected university details">
+        <DetailPanel
+          item={selectedItem}
+          shortlisted={selectedItem ? shortlist.has(selectedItem.id) : false}
+          onToggleShortlist={toggleShortlist}
+          onExport={exportItem}
+        />
+      </section>
 
       <div className="results-footer-cta">
         <button className="btn-primary" onClick={() => window.location.reload()}>
