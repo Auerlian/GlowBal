@@ -1,0 +1,193 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
+
+:root {
+  --glowbal-pink: #FF4D8C;
+  --glowbal-pink-light: #FF85B3;
+  --glowbal-mint: #00B4D8;
+  --glowbal-mint-light: #90E0EF;
+  --glowbal-silver: #6C757D;
+  --glowbal-silver-light: #E9ECEF;
+  --glowbal-dark: #1A1A2E;
+  --glowbal-dark-alt: #16213E;
+  --glowbal-white: #FFFFFF;
+  --glowbal-bg: #FFFFFF;
+  --glowbal-text: #2B2D42;
+
+  --font-main: 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--glowbal-bg);
+  color: var(--glowbal-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(255, 77, 140, 0.05), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(0, 180, 216, 0.05), transparent 25%);
+  background-attachment: fixed;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, var(--glowbal-pink) 0%, var(--glowbal-mint) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.glass-panel:hover {
+  border-color: rgba(0, 180, 216, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 180, 216, 0.15);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, var(--glowbal-pink), var(--glowbal-pink-light));
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 100px;
+  font-family: var(--font-main);
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 15px rgba(255, 77, 140, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 77, 140, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--glowbal-text);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 32px;
+  border-radius: 100px;
+  font-family: var(--font-main);
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 180, 216, 0.05);
+  border-color: var(--glowbal-mint);
+}
+
+.btn-selected {
+  background: rgba(0, 180, 216, 0.1);
+  border-color: var(--glowbal-mint);
+  box-shadow: 0 0 15px rgba(0, 180, 216, 0.15);
+  font-weight: 700;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 77, 140, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(255, 77, 140, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 77, 140, 0); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in {
+  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+
+/* Layout Utils */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--glowbal-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--glowbal-silver-light);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--glowbal-silver);
+}
