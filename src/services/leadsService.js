@@ -40,17 +40,18 @@ export const addLead = async ({ name, email, goal }) => {
 
   setLeads(next);
 
-  const webhook = import.meta.env.VITE_LEAD_WEBHOOK_URL;
-  if (webhook) {
+  const signupApi = import.meta.env.VITE_SIGNUP_API_URL;
+  if (signupApi) {
     try {
-      await fetch(webhook, {
+      await fetch(signupApi, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          event: 'glowbal.lead_signup',
-          lead: payload,
-          appLink: `${window.location.origin}${import.meta.env.BASE_URL}?app=1`,
-          emailTemplate: 'glowbal_welcome_shortlist_invite'
+          name: payload.name,
+          email: payload.email,
+          goal: payload.goal,
+          source: payload.source,
+          appLink: `${window.location.origin}${import.meta.env.BASE_URL}?app=1`
         })
       });
     } catch {
