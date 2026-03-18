@@ -250,23 +250,25 @@ const addImageData = async (institution) => {
   const candidates = [];
   let imageSource = 'placeholder';
 
+  const unsplashCampus = getUnsplashCampusUrl(`${institution.name} ${institution.location}`);
+  candidates.push(unsplashCampus);
+
   if (institution.explicitImage) {
     candidates.push(institution.explicitImage);
-    imageSource = 'explicit';
+    imageSource = 'explicit+campus-search';
   } else {
-    const wikiImage = await getWikimediaImage(institution.name);
+    const wikiImage = await getWikimediaImage(`${institution.name} campus`);
     if (wikiImage) {
       candidates.push(wikiImage);
-      imageSource = 'wikimedia';
+      imageSource = 'campus-search+wikimedia';
     } else {
-      imageSource = 'search';
+      imageSource = 'campus-search';
     }
   }
 
-  const unsplashCampus = getUnsplashCampusUrl(institution.name);
+  // Keep logos as very-late emergency fallback only.
   const clearbit = getClearbitLogoUrl(institution.domain);
   const favicon = getGoogleFaviconUrl(institution.domain);
-  candidates.push(unsplashCampus);
   candidates.push(clearbit);
   candidates.push(favicon);
   candidates.push(LOCAL_IMAGE_FALLBACK);

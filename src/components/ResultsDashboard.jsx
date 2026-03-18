@@ -10,7 +10,8 @@ import {
   ArrowRight,
   Download,
   Bookmark,
-  X
+  X,
+  Columns3
 } from 'lucide-react';
 import { trackEvent } from '../services/analytics';
 
@@ -148,10 +149,47 @@ const DetailModal = ({ open, onClose, children }) => {
   );
 };
 
+const CompareModal = ({ open, onClose, items = [] }) => {
+  if (!open) return null;
+
+  return (
+    <div className="report-detail-modal-overlay" onClick={onClose}>
+      <div className="report-detail-modal-shell compare-modal-shell" onClick={(e) => e.stopPropagation()}>
+        <button className="report-detail-close" onClick={onClose} aria-label="Close shortlist comparison">
+          <X size={18} />
+        </button>
+        <section className="glass-panel compare-modal-panel">
+          <h2>Compare shortlisted universities</h2>
+          <p>{items.length} selected</p>
+          <div className="compare-grid">
+            {items.map((item) => (
+              <article key={item.id} className="compare-card">
+                <UniversityImage key={`${item.id}-compare`} item={item} className="compare-card-image" />
+                <h3>{item.name}</h3>
+                <p>{item.location}</p>
+                <span className="report-score-pill">Match {item.score}%</span>
+                <div className="report-meta-row" style={{ marginTop: '0.5rem' }}>
+                  {item.budgetBand && <span className="report-meta-pill"><strong>Cost:</strong> {item.budgetBand}</span>}
+                  {item.competitiveness && <span className="report-meta-pill"><strong>Competitive:</strong> {item.competitiveness}</span>}
+                </div>
+                <a href={item.link} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ marginTop: '0.6rem', textDecoration: 'none' }}>
+                  Official site <ExternalLink size={14} />
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
 const ResultsDashboard = ({ results }) => {
   const [shortlist, setShortlist] = useState(new Set());
   const [selectedId, setSelectedId] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [shortlistBump, setShortlistBump] = useState(false);
   const detailRef = useRef(null);
 
   const allResults = useMemo(() => [...results.High, ...results.Medium, ...results.Low], [results]);
@@ -167,6 +205,8 @@ const ResultsDashboard = ({ results }) => {
         trackEvent('shortlist_remove', { universityId: item.id, universityName: item.name });
       } else {
         next.add(item.id);
+        setShortlistBump(true);
+        setTimeout(() => setShortlistBump(false), 380);
         trackEvent('shortlist_add', { universityId: item.id, universityName: item.name, totalShortlisted: next.size });
       }
       return next;
@@ -240,7 +280,10 @@ const ResultsDashboard = ({ results }) => {
           Data source: {results.source === 'live' ? 'Live public API' : results.source === 'live+fallback' ? 'Live API + fallback cache' : 'Fallback cache'}
         </p>
         <div className="report-menu-actions">
-          <span className="report-shortlist-chip"><Bookmark size={14} /> {shortlistItems.length} shortlisted</span>
+          <span className={`report-shortlist-chip ${shortlistBump ? 'is-bump' : ''}`}><Bookmark size={14} /> {shortlistItems.length} shortlisted</span>
+          <button className="btn-secondary" onClick={() => setCompareOpen(true)} disabled={shortlistItems.length === 0}>
+            <Columns3 size={15} /> Compare all shortlisted
+          </button>
           <button className="btn-secondary" onClick={exportShortlist} disabled={shortlistItems.length === 0}>
             <Download size={15} /> Export shortlist
           </button>
@@ -320,6 +363,8 @@ const ResultsDashboard = ({ results }) => {
           onExport={exportItem}
         />
       </DetailModal>
+
+      <CompareModal open={compareOpen} onClose={() => setCompareOpen(false)} items={shortlistItems} />
 
       <div className="results-footer-cta">
         <button className="btn-primary" onClick={() => window.location.reload()}>
