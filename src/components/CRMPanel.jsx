@@ -1,16 +1,57 @@
 import React, { useMemo, useState } from 'react';
-import { Copy, Download, Mail } from 'lucide-react';
-import { exportLeadsCsv, getLeads } from '../services/leadsService';
+import { Copy, Download, Mail, BarChart3, Users } from 'lucide-react';
+import { exportLeadsCsv, getLeads, seedFakeLeads } from '../services/leadsService';
+
+const toDayKey = (iso) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 const CRMPanel = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const leads = useMemo(() => getLeads(), [refreshKey]);
+
+  const query = useMemo(() => new URLSearchParams(window.location.search), []);
 
   const allEmails = leads.map((l) => l.email).filter(Boolean).join(', ');
 
   const copyEmails = async () => {
     await navigator.clipboard.writeText(allEmails);
   };
+
+  const generateDemoLeads = () => {
+    seedFakeLeads(213, 60);
+    setRefreshKey((x) => x + 1);
+  };
+
+  React.useEffect(() => {
+    if (query.get('seedDemo') === '213' && leads.length < 213) {
+      seedFakeLeads(213, 60);
+      setRefreshKey((x) => x + 1);
+    }
+  }, [query, leads.length]);
+
+  const chartData = useMemo(() => {
+    const cutoff = Date.now() - (60 * 24 * 60 * 60 * 1000);
+    const inWindow = leads.filter((lead) => new Date(lead.createdAt).getTime() >= cutoff);
+    const perDay = inWindow.reduce((acc, lead) => {
+      const key = toDayKey(lead.createdAt);
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const days = [];
+    for (let i = 59; i >= 0; i -= 1) {
+      const date = new Date(Date.now() - (i * 24 * 60 * 60 * 1000));
+      const key = toDayKey(date.toISOString());
+      days.push({ key, value: perDay[key] || 0 });
+    }
+
+    const max = Math.max(...days.map((d) => d.value), 1);
+    return { days, max };
+  }, [leads]);
+
+  const demoLink = `${window.location.origin}${import.meta.env.BASE_URL}?crm=1&seedDemo=213`;
 
   return (
     <section className="glass-panel crm-wrap animate-fade-in">
@@ -20,6 +61,9 @@ const CRMPanel = () => {
       </div>
 
       <div className="crm-actions">
+        <button className="btn-secondary" onClick={generateDemoLeads}>
+          <Users size={15} /> Generate 213 demo signups
+        </button>
         <button className="btn-secondary" onClick={copyEmails} disabled={!leads.length}>
           <Copy size={15} /> Copy all emails
         </button>
@@ -32,6 +76,25 @@ const CRMPanel = () => {
         <button className="btn-secondary" onClick={() => setRefreshKey((x) => x + 1)}>
           Refresh
         </button>
+      </div>
+
+      <div className="glass-panel" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
+        <p style={{ fontWeight: 700, marginBottom: '0.35rem' }}>Direct CRM demo link</p>
+        <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem', wordBreak: 'break-all' }}>{demoLink}</p>
+      </div>
+
+      <div className="glass-panel" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.45rem' }}>
+          <BarChart3 size={16} />
+          <strong>Signups over last 60 days</strong>
+        </div>
+        <div className="crm-chart">
+          {chartData.days.map((day) => (
+            <div key={day.key} className="crm-bar-wrap" title={`${day.key}: ${day.value} signups`}>
+              <div className="crm-bar" style={{ height: `${Math.max((day.value / chartData.max) * 100, day.value ? 6 : 2)}%` }} />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="crm-table-wrap">

@@ -629,8 +629,9 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
     box-shadow: 0 12px 28px rgba(22, 33, 62, 0.18);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    pointer-events: none;
   }
-  .top-nav-link { flex: 1; justify-content: center; min-height: 44px; font-size: 0.92rem; padding: 0.42rem 0.35rem; }
+  .top-nav-link { flex: 1; justify-content: center; min-height: 44px; font-size: 0.92rem; padding: 0.42rem 0.35rem; pointer-events: auto; }
   .brand-video, .brand-fallback { height: 96px; }
   .question-shell { padding-bottom: 0.9rem; }
   .question-card { gap: 0.95rem; padding: 1rem; border-radius: 18px; }
@@ -734,6 +735,24 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .crm-table { width: 100%; border-collapse: collapse; min-width: 760px; }
 .crm-table th, .crm-table td { text-align: left; padding: 0.55rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.08); }
 .crm-table th { font-size: 0.86rem; color: var(--glowbal-silver); text-transform: uppercase; letter-spacing: 0.04em; }
+.crm-chart {
+  height: 150px;
+  display: grid;
+  grid-template-columns: repeat(60, minmax(0, 1fr));
+  gap: 2px;
+  align-items: end;
+}
+.crm-bar-wrap {
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.crm-bar {
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--glowbal-mint), var(--glowbal-pink));
+  min-height: 2px;
+}
 
 @media (max-width: 740px) {
   .landing-wrap, .crm-wrap, .ai-wrap { padding: 0.85rem; }

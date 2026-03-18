@@ -1,5 +1,18 @@
 const STORAGE_KEY = 'glowbal_leads_v1';
 
+const FIRST_NAMES = ['James', 'Sophie', 'Ethan', 'Maya', 'Daniel', 'Ava', 'Noah', 'Amelia', 'Leo', 'Isla', 'Arjun', 'Zara', 'Omar', 'Hannah', 'Alex', 'Luca', 'Nina', 'Mateo', 'Freya', 'Sam'];
+const LAST_NAMES = ['Patel', 'Carter', 'Smith', 'Khan', 'Wright', 'Turner', 'Walker', 'Ali', 'Johnson', 'Evans', 'Brown', 'Taylor', 'Green', 'Hall', 'Baker'];
+const GOALS = [
+  'Find top CS programs in Europe',
+  'Scholarship options for UK business degrees',
+  'Affordable engineering universities',
+  'Best data science courses with internships',
+  'Universities with strong international support',
+  'Target/safety shortlist for medicine',
+  'Good AI and robotics programs',
+  'Universities with strong debate societies'
+];
+
 const safeJson = (value, fallback) => {
   try {
     return JSON.parse(value);
@@ -60,6 +73,31 @@ export const addLead = async ({ name, email, goal }) => {
   }
 
   return payload;
+};
+
+export const seedFakeLeads = (count = 213, daysBack = 60) => {
+  const now = Date.now();
+  const generated = Array.from({ length: count }).map((_, idx) => {
+    const first = FIRST_NAMES[idx % FIRST_NAMES.length];
+    const last = LAST_NAMES[(idx * 3) % LAST_NAMES.length];
+    const createdAtMs = now - Math.floor(Math.random() * daysBack * 24 * 60 * 60 * 1000);
+    const createdAt = new Date(createdAtMs).toISOString();
+    const updatedAt = new Date(createdAtMs + Math.floor(Math.random() * 36 * 60 * 60 * 1000)).toISOString();
+    const email = `${first}.${last}${100 + idx}@${idx % 2 === 0 ? 'gmail.com' : 'outlook.com'}`.toLowerCase();
+
+    return {
+      id: crypto.randomUUID(),
+      name: `${first} ${last}`,
+      email,
+      goal: GOALS[idx % GOALS.length],
+      source: idx % 4 === 0 ? 'instagram' : idx % 3 === 0 ? 'tiktok' : 'landing-signup',
+      createdAt,
+      updatedAt
+    };
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  setLeads(generated);
+  return generated;
 };
 
 export const exportLeadsCsv = () => {
