@@ -173,13 +173,30 @@ const normalizeOfficialLink = (link, domain) => {
 const getUnsplashCampusUrl = (name) => `https://source.unsplash.com/1600x900/?${encodeURIComponent(`${name} university campus`)}`;
 
 const flickrToLarge = (url = '') => {
-  // Flickr public feed returns _m.jpg; prefer larger variant when available.
   if (!url) return null;
-  return url.replace('_m.', '_b.');
+  // Prefer large sizes first; if unavailable CDN will 404 and UI fallback chain handles it.
+  return url
+    .replace('_m.', '_b.')
+    .replace('_n.', '_b.')
+    .replace('_q.', '_b.');
+};
+
+const toFlickrTags = (name = '') => {
+  const clean = name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 4);
+
+  return [...new Set([...clean, 'university', 'campus', 'architecture'])].join(',');
 };
 
 const getFlickrCampusImage = async (name) => {
-  const endpoint = `https://www.flickr.com/services/feeds/photos_public.gne?format=json&nojsoncallback=1&tags=${encodeURIComponent(`${name},university,campus`)}`;
+  const tags = toFlickrTags(name);
+  const endpoint = `https://www.flickr.com/services/feeds/photos_public.gne?format=json&nojsoncallback=1&tagmode=any&tags=${encodeURIComponent(tags)}`;
 
   try {
     const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
@@ -189,13 +206,22 @@ const getFlickrCampusImage = async (name) => {
     const items = Array.isArray(data?.items) ? data.items : [];
     if (!items.length) return null;
 
-    const candidate = items.find((item) => {
-      const title = `${item?.title || ''} ${item?.tags || ''}`.toLowerCase();
-      return !title.includes('logo') && !title.includes('icon');
-    }) || items[0];
+    const scored = items
+      .map((item) => {
+        const hay = `${item?.title || ''} ${item?.tags || ''}`.toLowerCase();
+        let score = 0;
+        if (hay.includes('campus')) score += 3;
+        if (hay.includes('university')) score += 2;
+        if (hay.includes('college')) score += 1;
+        if (hay.includes('logo') || hay.includes('icon')) score -= 4;
+        if (hay.includes('building') || hay.includes('architecture')) score += 1;
+        return { item, score };
+      })
+      .sort((a, b) => b.score - a.score);
 
-    const src = candidate?.media?.m;
-    if (!isHttpUrl(src)) return null;
+    const picked = scored.find((x) => x.score >= 1)?.item || scored[0]?.item;
+    const src = picked?.media?.m;
+    if (!isHttpUrl(src) || !src.includes('staticflickr.com')) return null;
 
     return flickrToLarge(src);
   } catch {
@@ -312,6 +338,7 @@ const addImageData = async (institution) => {
     imageSource = 'flickr-search';
   }
 
+  // Keep Openverse only as deep fallback if Flickr doesn't return a strong result.
   const openverseCampus = await getOpenverseCampusImage(`${institution.name} ${institution.location}`);
   if (openverseCampus) {
     candidates.push(openverseCampus);
