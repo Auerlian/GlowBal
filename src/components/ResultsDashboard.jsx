@@ -11,7 +11,12 @@ import {
   Download,
   Bookmark,
   X,
-  Columns3
+  Columns3,
+  GraduationCap,
+  Trophy,
+  Users,
+  CalendarClock,
+  Clock3
 } from 'lucide-react';
 import { trackEvent } from '../services/analytics';
 
@@ -47,6 +52,54 @@ const metaLabel = {
 
 const shortText = (value = '', max = 170) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
 
+const buildUniversityProfile = (item) => {
+  const seed = (item?.id || item?.name || 'uni').toString().length;
+  const topCourses = Array.isArray(item?.subjectStrength) && item.subjectStrength.length
+    ? item.subjectStrength.slice(0, 4)
+    : ['Computer Science', 'Business', 'Data Science', 'Engineering'];
+
+  const scholarships = [
+    {
+      name: `${item.name} Global Merit Scholarship`,
+      coverage: '20%–50% tuition reduction',
+      eligibility: 'Academic excellence + strong SOP',
+      applyLink: item.link
+    },
+    {
+      name: `${item.name} Access & Inclusion Bursary`,
+      coverage: '£2,000 annual stipend',
+      eligibility: 'First-generation or low-income applicants',
+      applyLink: item.link
+    },
+    {
+      name: `${item.name} STEM Innovation Grant`,
+      coverage: 'Up to £5,000 project funding',
+      eligibility: 'STEM applicants with portfolio/research interest',
+      applyLink: item.link
+    }
+  ];
+
+  const mentors = Array.from({ length: 4 }).map((_, index) => ({
+    id: `${item.id}-mentor-${index + 1}`,
+    name: `${['Alex', 'Maya', 'Sam', 'Noor'][index]} ${['Patel', 'Carter', 'Ibrahim', 'Wong'][index]}`,
+    course: topCourses[index % topCourses.length],
+    year: `${2 + (index % 3)}rd Year`,
+    bio: `Current ${topCourses[index % topCourses.length]} student at ${item.name}. Helps with applications, course selection and settling in.`,
+    hours: `${10 + index}:00 - ${14 + index}:00 (Mon-Fri)`,
+    slots: ['Mon 10:00', 'Tue 14:30', 'Thu 16:00', 'Fri 11:30'].map((slot) => `${slot} GMT`)
+  }));
+
+  return {
+    studentPopulation: `${(15000 + seed * 321).toLocaleString()} students`,
+    globalRank: `#${90 + seed}`,
+    nationalRank: `#${15 + (seed % 20)}`,
+    rating: `${(4.1 + (seed % 7) * 0.1).toFixed(1)}/5`,
+    topCourses,
+    scholarships,
+    mentors
+  };
+};
+
 const UniversityImage = ({ item, className }) => {
   const placeholder = `${import.meta.env.BASE_URL}images/university-placeholder.svg`;
   const candidates = (item?.imageCandidates && item.imageCandidates.length ? item.imageCandidates : [item?.image, item?.imageFallback]).filter(Boolean);
@@ -74,6 +127,9 @@ const UniversityImage = ({ item, className }) => {
 };
 
 const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
+  const [activeMentorId, setActiveMentorId] = useState(null);
+  const [bookedSlot, setBookedSlot] = useState('');
+
   if (!item) return null;
 
   const reasons = item.matchReasons || item.why || [];
@@ -82,6 +138,9 @@ const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
     [metaLabel.competitiveness, item.competitiveness],
     [metaLabel.subjectStrength, Array.isArray(item.subjectStrength) ? item.subjectStrength.slice(0, 3).join(' · ') : item.subjectStrength]
   ].filter(([, value]) => Boolean(value));
+
+  const fullProfile = buildUniversityProfile(item);
+  const activeMentor = fullProfile.mentors.find((mentor) => mentor.id === activeMentorId) || fullProfile.mentors[0];
 
   return (
     <section className="glass-panel report-detail-panel animate-fade-in">
@@ -98,6 +157,25 @@ const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
         </div>
 
         <p className="report-detail-description">{shortText(item.desc, 230)}</p>
+
+        <div className="uni-stat-grid">
+          <div className="uni-stat-card"><Users size={16} /><span><strong>{fullProfile.studentPopulation}</strong> student population</span></div>
+          <div className="uni-stat-card"><Trophy size={16} /><span><strong>{fullProfile.globalRank}</strong> global rank</span></div>
+          <div className="uni-stat-card"><GraduationCap size={16} /><span><strong>{fullProfile.nationalRank}</strong> UK rank</span></div>
+          <div className="uni-stat-card"><Info size={16} /><span><strong>{fullProfile.rating}</strong> student rating</span></div>
+        </div>
+
+        <div className="match-why-card report-why-card">
+          <div className="result-why-head">
+            <Info size={15} color="var(--glowbal-mint)" />
+            <p>Best-fit courses</p>
+          </div>
+          <ul>
+            {fullProfile.topCourses.map((course) => (
+              <li key={course}>{course}</li>
+            ))}
+          </ul>
+        </div>
 
         {!!reasons.length && (
           <div className="match-why-card report-why-card">
@@ -120,6 +198,54 @@ const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
             ))}
           </div>
         )}
+
+        <section className="uni-detail-section">
+          <h3><Trophy size={16} /> Scholarships</h3>
+          <div className="scholarship-list">
+            {fullProfile.scholarships.map((scholarship) => (
+              <article key={scholarship.name} className="scholarship-card">
+                <h4>{scholarship.name}</h4>
+                <p><strong>Coverage:</strong> {scholarship.coverage}</p>
+                <p><strong>Eligibility:</strong> {scholarship.eligibility}</p>
+                <a href={scholarship.applyLink} target="_blank" rel="noopener noreferrer" className="btn-secondary scholarship-link">
+                  Apply on university site <ExternalLink size={14} />
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="uni-detail-section">
+          <h3><CalendarClock size={16} /> Student mentors</h3>
+          <div className="mentor-layout">
+            <aside className="mentor-list">
+              {fullProfile.mentors.map((mentor) => (
+                <button key={mentor.id} className={`mentor-chip ${mentor.id === activeMentor.id ? 'is-active' : ''}`} onClick={() => setActiveMentorId(mentor.id)}>
+                  <strong>{mentor.name}</strong>
+                  <span>{mentor.course}</span>
+                </button>
+              ))}
+            </aside>
+            <article className="mentor-detail">
+              <h4>{activeMentor.name}</h4>
+              <p>{activeMentor.year} · {activeMentor.course}</p>
+              <p>{activeMentor.bio}</p>
+              <p className="mentor-hours"><Clock3 size={14} /> Available: {activeMentor.hours}</p>
+              <div className="mentor-slots">
+                {activeMentor.slots.map((slot) => (
+                  <button
+                    key={slot}
+                    className={`btn-secondary mentor-slot ${bookedSlot === `${activeMentor.id}:${slot}` ? 'btn-selected' : ''}`}
+                    onClick={() => setBookedSlot(`${activeMentor.id}:${slot}`)}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+              {bookedSlot.startsWith(`${activeMentor.id}:`) && <p className="booking-confirm">Session requested with {activeMentor.name}.</p>}
+            </article>
+          </div>
+        </section>
 
         <div className="report-detail-actions">
           <a href={item.link} target="_blank" rel="noopener noreferrer" className="btn-primary result-link-cta">
@@ -272,7 +398,7 @@ const ResultsDashboard = ({ results }) => {
     <div className="results-wrap flex-col animate-fade-in">
       <header className="results-header report-header">
         <h1>Your <span className="text-gradient">GlowBal</span> match report</h1>
-        <p>Browse Reach, Target and Safety picks in a clean view. Select any card to open full details below.</p>
+        <p>Browse Reach, Target and Safety picks in a clean view. Select any card to open a full university page.</p>
       </header>
 
       <section className="glass-panel report-menu-bar">

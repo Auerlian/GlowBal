@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { Loader2, AlertTriangle, RefreshCcw } from 'lucide-react';
+import { Loader2, AlertTriangle, RefreshCcw, Sparkles, UserPlus, Compass } from 'lucide-react';
 import HeroUpload from './components/HeroUpload';
 import QuestionCard from './components/QuestionCard';
 import ResultsDashboard from './components/ResultsDashboard';
 import LandingPage from './components/LandingPage';
 import CRMPanel from './components/CRMPanel';
+import AIChatboxPage from './components/AIChatboxPage';
 import { processCV, generateResults } from './services/matchingService';
 import { trackEvent } from './services/analytics';
 import AmbientBackground from './components/AmbientBackground';
@@ -18,12 +19,18 @@ const STATES = {
   RESULTS: 'RESULTS'
 };
 
+const NAV_PAGES = {
+  SIGNUP: 'SIGNUP',
+  MATCH: 'MATCH',
+  AI: 'AI'
+};
+
 function App() {
   const query = useMemo(() => new URLSearchParams(window.location.search), []);
   const isCreatorMode = query.get('app') === '1';
   const isCrmMode = query.get('crm') === '1';
 
-  const [showLanding, setShowLanding] = useState(!isCreatorMode && !isCrmMode);
+  const [activePage, setActivePage] = useState(isCreatorMode ? NAV_PAGES.MATCH : NAV_PAGES.SIGNUP);
   const [currentState, setCurrentState] = useState(STATES.IDLE);
   const [logoVideoFailed, setLogoVideoFailed] = useState(false);
   const [logoOpacity, setLogoOpacity] = useState(1);
@@ -108,7 +115,7 @@ function App() {
       setResults(null);
       setProfileContext(null);
       setErrorMessage('');
-      if (!isCreatorMode && !isCrmMode) setShowLanding(true);
+      setActivePage(NAV_PAGES.SIGNUP);
     }
   };
 
@@ -134,34 +141,6 @@ function App() {
 
     setLogoOpacity(1);
   };
-
-  const renderHeader = () => (
-    <header className="topbar content-layer">
-      <button className="brand-button" onClick={goHome} aria-label="Go to GlowBal home">
-        {!logoVideoFailed ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className="brand-video"
-            style={{ opacity: logoOpacity }}
-            onLoadedMetadata={(e) => {
-              const duration = e.currentTarget.duration || 0;
-              setLogoOpacity(duration > 0 ? 0 : 1);
-            }}
-            onTimeUpdate={handleLogoVideoTimeUpdate}
-            onError={() => setLogoVideoFailed(true)}
-          >
-            <source src={logoVideoSrc} type="video/mp4" />
-          </video>
-        ) : (
-          <div className="brand-fallback">✦</div>
-        )}
-      </button>
-    </header>
-  );
 
   const renderLoadingState = (text) => (
     <div className="loading-state flex-col flex-center animate-fade-in">
@@ -198,39 +177,89 @@ function App() {
     );
   };
 
+  const renderMatchPage = () => (
+    <>
+      {errorMessage && renderErrorState()}
+      {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
+      {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
+
+      {currentState === STATES.QUESTIONNAIRE && questions.length > 0 && (
+        <QuestionCard
+          key={questions[currentQuestionIndex].id}
+          question={questions[currentQuestionIndex]}
+          index={currentQuestionIndex}
+          total={questions.length}
+          savedAnswer={answers[questions[currentQuestionIndex].id] || []}
+          onNext={handleAnswerSubmit}
+          onBack={handleBackQuestion}
+          canGoBack={currentQuestionIndex > 0}
+        />
+      )}
+
+      {currentState === STATES.ANALYZING_ANSWERS && renderLoadingState('Curating perfect matches...')}
+      {currentState === STATES.RESULTS && results && <ResultsDashboard results={results} />}
+    </>
+  );
+
+  const navButtons = [
+    { key: NAV_PAGES.SIGNUP, label: 'SignUp', icon: UserPlus },
+    { key: NAV_PAGES.AI, label: 'AI', icon: Sparkles },
+    { key: NAV_PAGES.MATCH, label: 'Match', icon: Compass }
+  ];
+
   return (
     <div className="min-h-screen flex-col app-shell">
       <AmbientBackground density="page" />
-      {renderHeader()}
 
-      <main className="container content-layer main-content app-main">
+      <header className="topbar content-layer">
+        <button className="brand-button" onClick={goHome} aria-label="Go to GlowBal home">
+          {!logoVideoFailed ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              className="brand-video"
+              style={{ opacity: logoOpacity }}
+              onLoadedMetadata={(e) => {
+                const duration = e.currentTarget.duration || 0;
+                setLogoOpacity(duration > 0 ? 0 : 1);
+              }}
+              onTimeUpdate={handleLogoVideoTimeUpdate}
+              onError={() => setLogoVideoFailed(true)}
+            >
+              <source src={logoVideoSrc} type="video/mp4" />
+            </video>
+          ) : (
+            <div className="brand-fallback">✦</div>
+          )}
+        </button>
+
+        {!isCrmMode && (
+          <nav className="top-nav glass-panel" aria-label="Main navigation">
+            {navButtons.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                className={`top-nav-link ${activePage === key ? 'is-active' : ''}`}
+                onClick={() => setActivePage(key)}
+              >
+                <Icon size={14} /> {label}
+              </button>
+            ))}
+          </nav>
+        )}
+      </header>
+
+      <main className="container content-layer main-content app-main page-transition-shell">
         {isCrmMode ? (
           <CRMPanel />
-        ) : showLanding ? (
-          <LandingPage onOpenCreator={() => setShowLanding(false)} />
         ) : (
-          <>
-            {errorMessage && renderErrorState()}
-
-            {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
-            {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
-
-            {currentState === STATES.QUESTIONNAIRE && questions.length > 0 && (
-              <QuestionCard
-                key={questions[currentQuestionIndex].id}
-                question={questions[currentQuestionIndex]}
-                index={currentQuestionIndex}
-                total={questions.length}
-                savedAnswer={answers[questions[currentQuestionIndex].id] || []}
-                onNext={handleAnswerSubmit}
-                onBack={handleBackQuestion}
-                canGoBack={currentQuestionIndex > 0}
-              />
-            )}
-
-            {currentState === STATES.ANALYZING_ANSWERS && renderLoadingState('Curating perfect matches...')}
-            {currentState === STATES.RESULTS && results && <ResultsDashboard results={results} />}
-          </>
+          <section key={activePage} className="page-transition-panel animate-fade-in">
+            {activePage === NAV_PAGES.SIGNUP && <LandingPage onOpenCreator={() => setActivePage(NAV_PAGES.MATCH)} />}
+            {activePage === NAV_PAGES.AI && <AIChatboxPage />}
+            {activePage === NAV_PAGES.MATCH && renderMatchPage()}
+          </section>
         )}
       </main>
     </div>
