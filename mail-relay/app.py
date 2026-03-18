@@ -42,14 +42,41 @@ def init_db():
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS mentor_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            university_name TEXT,
+            mentor_name TEXT,
+            mentor_course TEXT,
+            slot TEXT,
+            requester_email TEXT,
+            requester_name TEXT,
+            created_at TEXT
+        )
+        """
+    )
     conn.commit()
     conn.close()
 
 
-def send_welcome_email(to_email: str, name: str):
+def send_html_email(to_email: str, subject: str, html: str):
     if not (SMTP_USER and SMTP_PASS and SENDER_EMAIL):
         raise RuntimeError("SMTP env vars missing")
 
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(html, "html"))
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SENDER_EMAIL, [to_email], msg.as_string())
+
+
+def send_welcome_email(to_email: str, name: str):
     subject = "Your Glowbal shortlist creator link ✨"
     display_name = name.strip() if name else "there"
 
@@ -67,16 +94,7 @@ def send_welcome_email(to_email: str, name: str):
     </html>
     """
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
-    msg["To"] = to_email
-    msg.attach(MIMEText(html, "html"))
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SENDER_EMAIL, [to_email], msg.as_string())
+    send_html_email(to_email, subject, html)
 
 
 @app.get("/health")
@@ -120,6 +138,62 @@ def signup():
         send_welcome_email(email, name)
     except Exception as exc:
         email_error = str(exc)
+
+    return jsonify({"ok": True, "emailSent": email_error is None, "emailError": email_error})
+
+
+@app.post("/api/mentor-request")
+def mentor_request():
+    data = request.get_json(force=True, silent=True) or {}
+    university_name = (data.get("universityName") or "").strip()
+    mentor_name = (data.get("mentorName") or "").strip()
+    mentor_course = (data.get("mentorCourse") or "").strip()
+    slot = (data.get("slot") or "").strip()
+    requester_email = (data.get("email") or "").strip().lower()
+    requester_name = (data.get("name") or "").strip()
+
+    if not requester_email or "@" not in requester_email:
+        return jsonify({"ok": False, "error": "Valid email is required"}), 400
+    if not university_name or not mentor_name or not slot:
+        return jsonify({"ok": False, "error": "University, mentor and slot are required"}), 400
+
+    now = datetime.utcnow().isoformat() + "Z"
+    conn = db_conn()
+    try:
+      conn.execute(
+        """
+        INSERT INTO mentor_requests (university_name, mentor_name, mentor_course, slot, requester_email, requester_name, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (university_name, mentor_name, mentor_course, slot, requester_email, requester_name, now),
+      )
+      conn.commit()
+    finally:
+      conn.close()
+
+    display_name = requester_name if requester_name else "there"
+    html = f"""
+    <html>
+      <body style='font-family:Arial,sans-serif;line-height:1.5;color:#1f2937;'>
+        <h2>Hi {display_name},</h2>
+        <p>Your mentor session request has been sent.</p>
+        <ul>
+          <li><strong>University:</strong> {university_name}</li>
+          <li><strong>Mentor:</strong> {mentor_name}</li>
+          <li><strong>Course:</strong> {mentor_course}</li>
+          <li><strong>Requested time:</strong> {slot}</li>
+        </ul>
+        <p>The mentor will get in touch with you to discuss next steps.</p>
+        <p style='font-size:12px;color:#6b7280;'>Sent by Glowbal</p>
+      </body>
+    </html>
+    """
+
+    email_error = None
+    try:
+      send_html_email(requester_email, "Mentor request received — Glowbal", html)
+    except Exception as exc:
+      email_error = str(exc)
 
     return jsonify({"ok": True, "emailSent": email_error is None, "emailError": email_error})
 

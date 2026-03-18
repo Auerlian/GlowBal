@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ExternalLink,
   Target,
@@ -7,50 +7,91 @@ import {
   Info,
   BookmarkPlus,
   CheckCircle2,
+  ArrowLeft,
   ArrowRight,
   Download,
   Bookmark,
-  X,
   Columns3,
   GraduationCap,
   Trophy,
   Users,
   CalendarClock,
-  Clock3
+  Clock3,
+  Mail,
+  PoundSterling
 } from 'lucide-react';
 import { trackEvent } from '../services/analytics';
+import { requestMentorSession } from '../services/mentorService';
 
 const TIER_CONFIG = [
-  {
-    key: 'High',
-    label: 'Reach',
-    icon: Flame,
-    color: 'var(--glowbal-pink)',
-    description: 'Ambitious options with strong upside.'
-  },
-  {
-    key: 'Medium',
-    label: 'Target',
-    icon: Target,
-    color: 'var(--glowbal-mint)',
-    description: 'Balanced fits for your current profile.'
-  },
-  {
-    key: 'Low',
-    label: 'Safety',
-    icon: Anchor,
-    color: 'var(--glowbal-silver)',
-    description: 'Lower-risk options for resilience.'
-  }
+  { key: 'High', label: 'Reach', icon: Flame, color: 'var(--glowbal-pink)', description: 'Ambitious options with strong upside.' },
+  { key: 'Medium', label: 'Target', icon: Target, color: 'var(--glowbal-mint)', description: 'Balanced fits for your current profile.' },
+  { key: 'Low', label: 'Safety', icon: Anchor, color: 'var(--glowbal-silver)', description: 'Lower-risk options for resilience.' }
 ];
 
-const metaLabel = {
-  budgetBand: 'Cost band',
-  competitiveness: 'Competitiveness',
-  subjectStrength: 'Subject fit'
+const MENTOR_PHOTOS = [
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80'
+];
+
+const SCHOLARSHIP_LINKS = {
+  'University of Oxford': [
+    { name: 'Oxford Scholarships and Funding', applyLink: 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding/oxford-funding' },
+    { name: 'Oxford Clarendon Fund', applyLink: 'https://www.ox.ac.uk/clarendon' }
+  ],
+  'University of Cambridge': [
+    { name: 'Cambridge International Scholarships', applyLink: 'https://www.student-funding.cam.ac.uk/' },
+    { name: 'Gates Cambridge Scholarships', applyLink: 'https://www.gatescambridge.org/apply/' }
+  ],
+  'Massachusetts Institute of Technology': [
+    { name: 'MIT Scholarships', applyLink: 'https://sfs.mit.edu/undergraduate-students/the-cost-of-attendance/making-mit-affordable/' }
+  ],
+  'Stanford University': [
+    { name: 'Stanford Financial Aid', applyLink: 'https://financialaid.stanford.edu/' }
+  ],
+  'University of Toronto': [
+    { name: 'U of T Scholarships', applyLink: 'https://future.utoronto.ca/finances/' }
+  ],
+  'University of Melbourne': [
+    { name: 'Melbourne Scholarships', applyLink: 'https://scholarships.unimelb.edu.au/' }
+  ],
+  'Technical University of Munich': [
+    { name: 'TUM Scholarships', applyLink: 'https://www.tum.de/en/studies/fees-and-financial-aid/scholarships' }
+  ],
+  'École Polytechnique': [
+    { name: 'École Polytechnique Funding', applyLink: 'https://programmes.polytechnique.edu/en/ingenieur-polytechnicien-program/admissions/scholarships-and-financial-aid' }
+  ],
+  'National University of Singapore': [
+    { name: 'NUS Scholarships', applyLink: 'https://www.nus.edu.sg/oam/scholarships' }
+  ],
+  'University of Tokyo': [
+    { name: 'UTokyo Scholarships', applyLink: 'https://www.u-tokyo.ac.jp/en/prospective-students/scholarships.html' }
+  ],
+  'ETH Zurich': [
+    { name: 'ETH Excellence Scholarship', applyLink: 'https://ethz.ch/en/studies/financial/scholarships/excellencescholarship.html' }
+  ],
+  'Seoul National University': [
+    { name: 'SNU Scholarships', applyLink: 'https://en.snu.ac.kr/admission/scholarships' }
+  ]
 };
 
-const shortText = (value = '', max = 170) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
+const buildScholarships = (item) => {
+  const mapped = SCHOLARSHIP_LINKS[item.name] || [];
+  if (mapped.length) {
+    return mapped.map((s, idx) => ({ ...s, id: `${item.id}-s-${idx + 1}` }));
+  }
+
+  const origin = (() => {
+    try { return new URL(item.link).origin; } catch { return item.link; }
+  })();
+
+  return [
+    { id: `${item.id}-fallback-1`, name: `${item.name} Scholarships`, applyLink: item.link },
+    { id: `${item.id}-fallback-2`, name: `${item.name} Funding & Aid`, applyLink: `${origin}/` }
+  ];
+};
 
 const buildUniversityProfile = (item) => {
   const seed = (item?.id || item?.name || 'uni').toString().length;
@@ -58,33 +99,14 @@ const buildUniversityProfile = (item) => {
     ? item.subjectStrength.slice(0, 4)
     : ['Computer Science', 'Business', 'Data Science', 'Engineering'];
 
-  const scholarships = [
-    {
-      name: `${item.name} Global Merit Scholarship`,
-      coverage: '20%–50% tuition reduction',
-      eligibility: 'Academic excellence + strong SOP',
-      applyLink: item.link
-    },
-    {
-      name: `${item.name} Access & Inclusion Bursary`,
-      coverage: '£2,000 annual stipend',
-      eligibility: 'First-generation or low-income applicants',
-      applyLink: item.link
-    },
-    {
-      name: `${item.name} STEM Innovation Grant`,
-      coverage: 'Up to £5,000 project funding',
-      eligibility: 'STEM applicants with portfolio/research interest',
-      applyLink: item.link
-    }
-  ];
-
   const mentors = Array.from({ length: 4 }).map((_, index) => ({
     id: `${item.id}-mentor-${index + 1}`,
     name: `${['Alex', 'Maya', 'Sam', 'Noor'][index]} ${['Patel', 'Carter', 'Ibrahim', 'Wong'][index]}`,
+    image: MENTOR_PHOTOS[index % MENTOR_PHOTOS.length],
     course: topCourses[index % topCourses.length],
     year: `${2 + (index % 3)}rd Year`,
-    bio: `Current ${topCourses[index % topCourses.length]} student at ${item.name}. Helps with applications, course selection and settling in.`,
+    bio: `Current ${topCourses[index % topCourses.length]} student at ${item.name}. Helps with SOPs, applications and interview prep.`,
+    price: `£${25 + index * 10}/session`,
     hours: `${10 + index}:00 - ${14 + index}:00 (Mon-Fri)`,
     slots: ['Mon 10:00', 'Tue 14:30', 'Thu 16:00', 'Fri 11:30'].map((slot) => `${slot} GMT`)
   }));
@@ -95,209 +117,215 @@ const buildUniversityProfile = (item) => {
     nationalRank: `#${15 + (seed % 20)}`,
     rating: `${(4.1 + (seed % 7) * 0.1).toFixed(1)}/5`,
     topCourses,
-    scholarships,
+    scholarships: buildScholarships(item),
     mentors
   };
 };
 
 const UniversityImage = ({ item, className }) => {
   const placeholder = `${import.meta.env.BASE_URL}images/university-placeholder.svg`;
-  const candidates = (item?.imageCandidates && item.imageCandidates.length ? item.imageCandidates : [item?.image, item?.imageFallback]).filter(Boolean);
-  const [candidateIndex, setCandidateIndex] = useState(0);
-
-  const currentSrc = candidates[candidateIndex] || placeholder;
-
+  const candidates = (item?.imageCandidates?.length ? item.imageCandidates : [item?.image, item?.imageFallback]).filter(Boolean);
+  const [idx, setIdx] = useState(0);
   return (
     <img
-      src={currentSrc}
+      src={candidates[idx] || placeholder}
       alt={item?.name || 'University image'}
       className={className}
       loading="lazy"
       referrerPolicy="no-referrer"
       onError={(e) => {
-        if (candidateIndex < candidates.length - 1) {
-          setCandidateIndex((prev) => prev + 1);
-          return;
-        }
-        e.currentTarget.onerror = null;
-        e.currentTarget.src = placeholder;
+        if (idx < candidates.length - 1) setIdx((p) => p + 1);
+        else e.currentTarget.src = placeholder;
       }}
     />
   );
 };
 
-const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
+const UniversityFullPage = ({ item, isShortlisted, onToggleShortlist, onBack }) => {
   const [activeMentorId, setActiveMentorId] = useState(null);
-  const [bookedSlot, setBookedSlot] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [requestEmail, setRequestEmail] = useState('');
+  const [requestName, setRequestName] = useState('');
+  const [requestStatus, setRequestStatus] = useState('');
 
-  if (!item) return null;
+  const profile = useMemo(() => buildUniversityProfile(item), [item]);
+  const activeMentor = profile.mentors.find((m) => m.id === activeMentorId) || profile.mentors[0];
 
-  const reasons = item.matchReasons || item.why || [];
-  const metadata = [
-    [metaLabel.budgetBand, item.budgetBand],
-    [metaLabel.competitiveness, item.competitiveness],
-    [metaLabel.subjectStrength, Array.isArray(item.subjectStrength) ? item.subjectStrength.slice(0, 3).join(' · ') : item.subjectStrength]
-  ].filter(([, value]) => Boolean(value));
+  const submitMentorRequest = async () => {
+    if (!selectedSlot) return setRequestStatus('Select a time slot first.');
+    if (!requestEmail || !requestEmail.includes('@')) return setRequestStatus('Enter a valid email.');
 
-  const fullProfile = buildUniversityProfile(item);
-  const activeMentor = fullProfile.mentors.find((mentor) => mentor.id === activeMentorId) || fullProfile.mentors[0];
+    try {
+      setRequestStatus('Sending request...');
+      await requestMentorSession({
+        universityName: item.name,
+        mentorName: activeMentor.name,
+        mentorCourse: activeMentor.course,
+        slot: selectedSlot,
+        email: requestEmail,
+        name: requestName
+      });
+      setRequestStatus('Request sent ✅ You will receive an email confirmation shortly.');
+    } catch (error) {
+      setRequestStatus(error.message || 'Could not send request. Please try again.');
+    }
+  };
 
   return (
-    <section className="glass-panel report-detail-panel animate-fade-in">
-      <UniversityImage key={`${item.id}-detail`} item={item} className="report-detail-image" />
-      <div className="report-detail-body">
-        <div className="report-detail-head">
-          <div>
-            <h2>{item.name}</h2>
-            <p>{item.location}</p>
-          </div>
-          <button className="btn-secondary report-shortlist-btn" onClick={() => onToggleShortlist(item)}>
-            {shortlisted ? <><CheckCircle2 size={15} /> Shortlisted</> : <><BookmarkPlus size={15} /> Shortlist</>}
-          </button>
-        </div>
-
-        <p className="report-detail-description">{shortText(item.desc, 230)}</p>
-
-        <div className="uni-stat-grid">
-          <div className="uni-stat-card"><Users size={16} /><span><strong>{fullProfile.studentPopulation}</strong> student population</span></div>
-          <div className="uni-stat-card"><Trophy size={16} /><span><strong>{fullProfile.globalRank}</strong> global rank</span></div>
-          <div className="uni-stat-card"><GraduationCap size={16} /><span><strong>{fullProfile.nationalRank}</strong> UK rank</span></div>
-          <div className="uni-stat-card"><Info size={16} /><span><strong>{fullProfile.rating}</strong> student rating</span></div>
-        </div>
-
-        <div className="match-why-card report-why-card">
-          <div className="result-why-head">
-            <Info size={15} color="var(--glowbal-mint)" />
-            <p>Best-fit courses</p>
-          </div>
-          <ul>
-            {fullProfile.topCourses.map((course) => (
-              <li key={course}>{course}</li>
-            ))}
-          </ul>
-        </div>
-
-        {!!reasons.length && (
-          <div className="match-why-card report-why-card">
-            <div className="result-why-head">
-              <Info size={15} color="var(--glowbal-mint)" />
-              <p>Why this fits you / CV</p>
-            </div>
-            <ul>
-              {reasons.slice(0, 4).map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {!!metadata.length && (
+    <section className="uni-fullpage animate-fade-in">
+      <div className="uni-full-hero glass-panel">
+        <UniversityImage item={item} className="uni-full-hero-image" />
+        <div className="uni-full-hero-overlay" />
+        <div className="uni-full-hero-content">
+          <button className="btn-secondary" onClick={onBack}><ArrowLeft size={15} /> Back to matches</button>
+          <h1>{item.name}</h1>
+          <p>{item.location}</p>
           <div className="report-meta-row">
-            {metadata.map(([label, value]) => (
-              <span className="report-meta-pill" key={label}><strong>{label}:</strong> {value}</span>
-            ))}
+            <span className="report-meta-pill"><Users size={14} /> {profile.studentPopulation}</span>
+            <span className="report-meta-pill"><Trophy size={14} /> Global {profile.globalRank}</span>
+            <span className="report-meta-pill"><GraduationCap size={14} /> National {profile.nationalRank}</span>
+            <span className="report-meta-pill"><Info size={14} /> {profile.rating}</span>
           </div>
-        )}
-
-        <section className="uni-detail-section">
-          <h3><Trophy size={16} /> Scholarships</h3>
-          <div className="scholarship-list">
-            {fullProfile.scholarships.map((scholarship) => (
-              <article key={scholarship.name} className="scholarship-card">
-                <h4>{scholarship.name}</h4>
-                <p><strong>Coverage:</strong> {scholarship.coverage}</p>
-                <p><strong>Eligibility:</strong> {scholarship.eligibility}</p>
-                <a href={scholarship.applyLink} target="_blank" rel="noopener noreferrer" className="btn-secondary scholarship-link">
-                  Apply on university site <ExternalLink size={14} />
-                </a>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="uni-detail-section">
-          <h3><CalendarClock size={16} /> Student mentors</h3>
-          <div className="mentor-layout">
-            <aside className="mentor-list">
-              {fullProfile.mentors.map((mentor) => (
-                <button key={mentor.id} className={`mentor-chip ${mentor.id === activeMentor.id ? 'is-active' : ''}`} onClick={() => setActiveMentorId(mentor.id)}>
-                  <strong>{mentor.name}</strong>
-                  <span>{mentor.course}</span>
-                </button>
-              ))}
-            </aside>
-            <article className="mentor-detail">
-              <h4>{activeMentor.name}</h4>
-              <p>{activeMentor.year} · {activeMentor.course}</p>
-              <p>{activeMentor.bio}</p>
-              <p className="mentor-hours"><Clock3 size={14} /> Available: {activeMentor.hours}</p>
-              <div className="mentor-slots">
-                {activeMentor.slots.map((slot) => (
-                  <button
-                    key={slot}
-                    className={`btn-secondary mentor-slot ${bookedSlot === `${activeMentor.id}:${slot}` ? 'btn-selected' : ''}`}
-                    onClick={() => setBookedSlot(`${activeMentor.id}:${slot}`)}
-                  >
-                    {slot}
-                  </button>
-                ))}
-              </div>
-              {bookedSlot.startsWith(`${activeMentor.id}:`) && <p className="booking-confirm">Session requested with {activeMentor.name}.</p>}
-            </article>
-          </div>
-        </section>
-
-        <div className="report-detail-actions">
-          <a href={item.link} target="_blank" rel="noopener noreferrer" className="btn-primary result-link-cta">
-            Official programme link <ExternalLink size={16} />
-          </a>
-          <button className="btn-secondary" onClick={() => onExport(item)}>
-            <Download size={15} /> Export brief
+          <button className="btn-primary" onClick={() => onToggleShortlist(item)}>
+            {isShortlisted ? <><CheckCircle2 size={15} /> Shortlisted</> : <><BookmarkPlus size={15} /> Add to shortlist</>}
           </button>
         </div>
       </div>
+
+      <div className="uni-full-grid">
+        <article className="glass-panel uni-full-card">
+          <h3><Info size={16} /> Overview</h3>
+          <p>{item.desc}</p>
+          <h4>Best matching courses</h4>
+          <ul>
+            {profile.topCourses.map((course) => <li key={course}>{course}</li>)}
+          </ul>
+        </article>
+
+        <article className="glass-panel uni-full-card">
+          <h3><Trophy size={16} /> Real scholarship links</h3>
+          <div className="scholarship-list">
+            {profile.scholarships.map((s) => (
+              <a key={s.id} href={s.applyLink} target="_blank" rel="noopener noreferrer" className="scholarship-row">
+                <span>{s.name}</span>
+                <ExternalLink size={14} />
+              </a>
+            ))}
+          </div>
+        </article>
+      </div>
+
+      <article className="glass-panel uni-full-card mentor-card-advanced">
+        <h3><CalendarClock size={16} /> Student mentors</h3>
+        <div className="mentor-advanced-grid">
+          <aside className="mentor-profile-list">
+            {profile.mentors.map((mentor) => (
+              <button key={mentor.id} className={`mentor-profile-chip ${mentor.id === activeMentor.id ? 'is-active' : ''}`} onClick={() => setActiveMentorId(mentor.id)}>
+                <img src={mentor.image} alt={mentor.name} />
+                <div>
+                  <strong>{mentor.name}</strong>
+                  <span>{mentor.course}</span>
+                  <small><PoundSterling size={12} /> {mentor.price}</small>
+                </div>
+              </button>
+            ))}
+          </aside>
+
+          <section className="mentor-booking-panel">
+            <div className="mentor-booking-head">
+              <img src={activeMentor.image} alt={activeMentor.name} />
+              <div>
+                <h4>{activeMentor.name}</h4>
+                <p>{activeMentor.year} · {activeMentor.course}</p>
+                <p>{activeMentor.bio}</p>
+                <p className="mentor-hours"><Clock3 size={14} /> {activeMentor.hours}</p>
+              </div>
+            </div>
+
+            <div className="mentor-slots">
+              {activeMentor.slots.map((slot) => (
+                <button key={`${activeMentor.id}-${slot}`} className={`btn-secondary mentor-slot ${selectedSlot === slot ? 'btn-selected' : ''}`} onClick={() => setSelectedSlot(slot)}>
+                  {slot}
+                </button>
+              ))}
+            </div>
+
+            <div className="mentor-request-form">
+              <label>
+                Your name
+                <input value={requestName} onChange={(e) => setRequestName(e.target.value)} placeholder="Optional" />
+              </label>
+              <label>
+                Your email
+                <div className="mentor-email-row">
+                  <Mail size={14} />
+                  <input value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)} placeholder="you@example.com" type="email" />
+                </div>
+              </label>
+              <button className="btn-primary" onClick={submitMentorRequest}>Request this session</button>
+              {requestStatus && <p className="mentor-request-status">{requestStatus}</p>}
+            </div>
+          </section>
+        </div>
+      </article>
     </section>
   );
 };
 
-const DetailModal = ({ open, onClose, children }) => {
-  if (!open) return null;
+const ResultsDashboard = ({ results }) => {
+  const [shortlist, setShortlist] = useState(new Set());
+  const [selectedId, setSelectedId] = useState(null);
+  const [showCompare, setShowCompare] = useState(false);
+
+  const allResults = useMemo(() => [...results.High, ...results.Medium, ...results.Low], [results]);
+  const selectedItem = useMemo(() => allResults.find((i) => i.id === selectedId) || null, [allResults, selectedId]);
+  const shortlistItems = useMemo(() => allResults.filter((i) => shortlist.has(i.id)), [allResults, shortlist]);
+
+  const toggleShortlist = (item) => {
+    setShortlist((prev) => {
+      const next = new Set(prev);
+      if (next.has(item.id)) next.delete(item.id);
+      else next.add(item.id);
+      return next;
+    });
+  };
+
+  if (selectedItem) {
+    return (
+      <UniversityFullPage
+        item={selectedItem}
+        isShortlisted={shortlist.has(selectedItem.id)}
+        onToggleShortlist={toggleShortlist}
+        onBack={() => setSelectedId(null)}
+      />
+    );
+  }
 
   return (
-    <div className="report-detail-modal-overlay" onClick={onClose}>
-      <div className="report-detail-modal-shell" onClick={(e) => e.stopPropagation()}>
-        <button className="report-detail-close" onClick={onClose} aria-label="Close university details">
-          <X size={18} />
-        </button>
-        {children}
-      </div>
-    </div>
-  );
-};
+    <div className="results-wrap flex-col animate-fade-in">
+      <header className="results-header report-header">
+        <h1>Your <span className="text-gradient">GlowBal</span> match report</h1>
+        <p>Select a university to open a full-screen details page.</p>
+      </header>
 
-const CompareModal = ({ open, onClose, items = [] }) => {
-  if (!open) return null;
+      <section className="glass-panel report-menu-bar">
+        <div className="report-menu-actions">
+          <span className="report-shortlist-chip"><Bookmark size={14} /> {shortlistItems.length} shortlisted</span>
+          <button className="btn-secondary" onClick={() => setShowCompare((v) => !v)} disabled={!shortlistItems.length}>
+            <Columns3 size={15} /> {showCompare ? 'Hide compare' : 'Compare shortlisted'}
+          </button>
+        </div>
+      </section>
 
-  return (
-    <div className="report-detail-modal-overlay" onClick={onClose}>
-      <div className="report-detail-modal-shell compare-modal-shell" onClick={(e) => e.stopPropagation()}>
-        <button className="report-detail-close" onClick={onClose} aria-label="Close shortlist comparison">
-          <X size={18} />
-        </button>
+      {showCompare && (
         <section className="glass-panel compare-modal-panel">
           <h2>Compare shortlisted universities</h2>
-          <p>{items.length} selected</p>
           <div className="compare-grid">
-            {items.map((item) => (
+            {shortlistItems.map((item) => (
               <article key={item.id} className="compare-card">
-                <UniversityImage key={`${item.id}-compare`} item={item} className="compare-card-image" />
+                <UniversityImage item={item} className="compare-card-image" />
                 <h3>{item.name}</h3>
                 <p>{item.location}</p>
-                <span className="report-score-pill">Match {item.score}%</span>
-                <div className="report-meta-row" style={{ marginTop: '0.5rem' }}>
-                  {item.budgetBand && <span className="report-meta-pill"><strong>Cost:</strong> {item.budgetBand}</span>}
-                  {item.competitiveness && <span className="report-meta-pill"><strong>Competitive:</strong> {item.competitiveness}</span>}
-                </div>
                 <a href={item.link} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ marginTop: '0.6rem', textDecoration: 'none' }}>
                   Official site <ExternalLink size={14} />
                 </a>
@@ -305,116 +333,7 @@ const CompareModal = ({ open, onClose, items = [] }) => {
             ))}
           </div>
         </section>
-      </div>
-    </div>
-  );
-};
-
-const ResultsDashboard = ({ results }) => {
-  const [shortlist, setShortlist] = useState(new Set());
-  const [selectedId, setSelectedId] = useState(null);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [compareOpen, setCompareOpen] = useState(false);
-  const [shortlistBump, setShortlistBump] = useState(false);
-  const detailRef = useRef(null);
-
-  const allResults = useMemo(() => [...results.High, ...results.Medium, ...results.Low], [results]);
-  const shortlistItems = useMemo(() => allResults.filter((item) => shortlist.has(item.id)), [allResults, shortlist]);
-
-  const selectedItem = useMemo(() => allResults.find((item) => item.id === selectedId) || allResults[0], [allResults, selectedId]);
-
-  const toggleShortlist = (item) => {
-    setShortlist((prev) => {
-      const next = new Set(prev);
-      if (next.has(item.id)) {
-        next.delete(item.id);
-        trackEvent('shortlist_remove', { universityId: item.id, universityName: item.name });
-      } else {
-        next.add(item.id);
-        setShortlistBump(true);
-        setTimeout(() => setShortlistBump(false), 380);
-        trackEvent('shortlist_add', { universityId: item.id, universityName: item.name, totalShortlisted: next.size });
-      }
-      return next;
-    });
-  };
-
-  const handleSelectItem = (itemId) => {
-    setSelectedId(itemId);
-    setDetailOpen(true);
-    if (window.innerWidth <= 900 && detailRef.current) {
-      requestAnimationFrame(() => {
-        detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-  };
-
-  const exportItem = (item) => {
-    const content = [
-      'GlowBal Match Brief',
-      `Institution: ${item.name}`,
-      `Location: ${item.location}`,
-      `Summary: ${item.desc}`,
-      '',
-      'Why this match:',
-      ...(item.matchReasons || item.why || []).map((reason, i) => `${i + 1}. ${reason}`),
-      '',
-      `Source: ${item.link}`
-    ].join('\n');
-
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${item.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_glowbal_match.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportShortlist = () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      shortlistedUniversities: shortlistItems.map(({ id, name, location, link, budgetBand, competitiveness, subjectStrength }) => ({
-        id,
-        name,
-        location,
-        link,
-        budgetBand,
-        competitiveness,
-        subjectStrength
-      }))
-    };
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `glowbal-shortlist-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <div className="results-wrap flex-col animate-fade-in">
-      <header className="results-header report-header">
-        <h1>Your <span className="text-gradient">GlowBal</span> match report</h1>
-        <p>Browse Reach, Target and Safety picks in a clean view. Select any card to open a full university page.</p>
-      </header>
-
-      <section className="glass-panel report-menu-bar">
-        <p style={{ fontSize: '0.85rem', color: 'var(--glowbal-silver)' }}>
-          Data source: {results.source === 'live' ? 'Live public API' : results.source === 'live+fallback' ? 'Live API + fallback cache' : 'Fallback cache'}
-        </p>
-        <div className="report-menu-actions">
-          <span className={`report-shortlist-chip ${shortlistBump ? 'is-bump' : ''}`}><Bookmark size={14} /> {shortlistItems.length} shortlisted</span>
-          <button className="btn-secondary" onClick={() => setCompareOpen(true)} disabled={shortlistItems.length === 0}>
-            <Columns3 size={15} /> Compare all shortlisted
-          </button>
-          <button className="btn-secondary" onClick={exportShortlist} disabled={shortlistItems.length === 0}>
-            <Download size={15} /> Export shortlist
-          </button>
-        </div>
-      </section>
+      )}
 
       <section className="report-columns" aria-label="University recommendation columns">
         {TIER_CONFIG.map(({ key, label, description, icon: TierGlyph, color }) => {
@@ -431,38 +350,20 @@ const ResultsDashboard = ({ results }) => {
 
               <div className="report-tier-cards">
                 {tierItems.map((item) => {
-                  const active = selectedItem?.id === item.id;
                   const isShortlisted = shortlist.has(item.id);
                   return (
-                    <button
-                      key={item.id}
-                      className={`report-compact-card ${active ? 'is-active' : ''}`}
-                      onClick={() => handleSelectItem(item.id)}
-                    >
-                      <UniversityImage key={`${item.id}-card`} item={item} className="report-compact-image" />
+                    <button key={item.id} className="report-compact-card" onClick={() => setSelectedId(item.id)}>
+                      <UniversityImage item={item} className="report-compact-image" />
                       <div className="report-compact-body">
-                        <div>
-                          <h3>{item.name}</h3>
-                          <p>{item.location}</p>
-                        </div>
+                        <div><h3>{item.name}</h3><p>{item.location}</p></div>
                         <span className="report-score-pill">Match {item.score}%</span>
                       </div>
                       <span
                         role="button"
                         tabIndex={0}
                         className={`report-card-bookmark ${isShortlisted ? 'is-on' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleShortlist(item);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleShortlist(item);
-                          }
-                        }}
-                        aria-label={isShortlisted ? `Remove ${item.name} from shortlist` : `Add ${item.name} to shortlist`}
+                        onClick={(e) => { e.stopPropagation(); toggleShortlist(item); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleShortlist(item); } }}
                       >
                         <Bookmark size={14} />
                       </span>
@@ -474,23 +375,6 @@ const ResultsDashboard = ({ results }) => {
           );
         })}
       </section>
-
-      <section ref={detailRef} className="report-detail-anchor" aria-label="Selected university details">
-        <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>
-          Click any university card to open full details.
-        </p>
-      </section>
-
-      <DetailModal open={detailOpen} onClose={() => setDetailOpen(false)}>
-        <DetailPanel
-          item={selectedItem}
-          shortlisted={selectedItem ? shortlist.has(selectedItem.id) : false}
-          onToggleShortlist={toggleShortlist}
-          onExport={exportItem}
-        />
-      </DetailModal>
-
-      <CompareModal open={compareOpen} onClose={() => setCompareOpen(false)} items={shortlistItems} />
 
       <div className="results-footer-cta">
         <button className="btn-primary" onClick={() => window.location.reload()}>
