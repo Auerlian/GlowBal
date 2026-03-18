@@ -1,7 +1,8 @@
 const STORAGE_KEY = 'glowbal_leads_v1';
 
-const FIRST_NAMES = ['James', 'Sophie', 'Ethan', 'Maya', 'Daniel', 'Ava', 'Noah', 'Amelia', 'Leo', 'Isla', 'Arjun', 'Zara', 'Omar', 'Hannah', 'Alex', 'Luca', 'Nina', 'Mateo', 'Freya', 'Sam'];
-const LAST_NAMES = ['Patel', 'Carter', 'Smith', 'Khan', 'Wright', 'Turner', 'Walker', 'Ali', 'Johnson', 'Evans', 'Brown', 'Taylor', 'Green', 'Hall', 'Baker'];
+const FIRST_NAMES = ['Nguyen', 'Minh', 'Linh', 'Anh', 'Phuong', 'Bao', 'Trang', 'Khanh', 'Huy', 'Mai', 'Arjun', 'Aisha', 'Mateo', 'Sofia', 'Yuki', 'Amir', 'Noor', 'Diego', 'Nadia', 'Kai'];
+const LAST_NAMES = ['Tran', 'Le', 'Pham', 'Hoang', 'Vo', 'Bui', 'Dang', 'Do', 'Ngo', 'Duong', 'Kumar', 'Hassan', 'Tanaka', 'Garcia', 'Silva'];
+const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com.vn', 'outlook.com', 'proton.me', 'icloud.com'];
 const GOALS = [
   'Find top CS programs in Europe',
   'Scholarship options for UK business degrees',
@@ -75,14 +76,17 @@ export const addLead = async ({ name, email, goal }) => {
   return payload;
 };
 
-const createFakeLead = (idx = 0, daysBack = 60) => {
+const SIGNUP_START_ISO = '2026-02-05T00:00:00.000Z';
+
+const createFakeLead = (idx = 0) => {
   const now = Date.now();
+  const start = new Date(SIGNUP_START_ISO).getTime();
   const first = FIRST_NAMES[idx % FIRST_NAMES.length];
   const last = LAST_NAMES[(idx * 3) % LAST_NAMES.length];
-  const createdAtMs = now - Math.floor(Math.random() * daysBack * 24 * 60 * 60 * 1000);
+  const createdAtMs = start + Math.floor(Math.random() * Math.max(now - start, 1));
   const createdAt = new Date(createdAtMs).toISOString();
   const updatedAt = new Date(createdAtMs + Math.floor(Math.random() * 36 * 60 * 60 * 1000)).toISOString();
-  const email = `${first}.${last}${100 + idx}@${idx % 2 === 0 ? 'gmail.com' : 'outlook.com'}`.toLowerCase();
+  const email = `${first}.${last}${100 + idx}@${EMAIL_DOMAINS[idx % EMAIL_DOMAINS.length]}`.toLowerCase();
 
   return {
     id: crypto.randomUUID(),
@@ -95,14 +99,14 @@ const createFakeLead = (idx = 0, daysBack = 60) => {
   };
 };
 
-export const seedFakeLeads = (count = 213, daysBack = 60) => {
-  const generated = Array.from({ length: count }).map((_, idx) => createFakeLead(idx, daysBack));
+export const seedFakeLeads = (count = 213) => {
+  const generated = Array.from({ length: count }).map((_, idx) => createFakeLead(idx));
   generated.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   setLeads(generated);
   return generated;
 };
 
-export const ensureLeadCount = (targetCount = 213, daysBack = 60) => {
+export const ensureLeadCount = (targetCount = 213) => {
   const existing = getLeads();
   if (existing.length >= targetCount) return existing;
 
@@ -111,7 +115,7 @@ export const ensureLeadCount = (targetCount = 213, daysBack = 60) => {
   let idx = existing.length;
 
   while (next.length < targetCount) {
-    const candidate = createFakeLead(idx, daysBack);
+    const candidate = createFakeLead(idx);
     idx += 1;
     if (seenEmails.has(candidate.email)) continue;
     seenEmails.add(candidate.email);
@@ -135,10 +139,10 @@ export const validateLeadData = (leads = getLeads()) => {
   });
 
   const now = Date.now();
-  const sixtyDaysAgo = now - (60 * 24 * 60 * 60 * 1000);
+  const start = new Date(SIGNUP_START_ISO).getTime();
   const inRangeCount = leads.filter((lead) => {
     const t = new Date(lead.createdAt).getTime();
-    return Number.isFinite(t) && t >= sixtyDaysAgo && t <= now;
+    return Number.isFinite(t) && t >= start && t <= now;
   }).length;
 
   return {

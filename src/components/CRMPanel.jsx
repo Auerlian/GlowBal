@@ -22,13 +22,13 @@ const CRMPanel = () => {
   };
 
   const generateDemoLeads = () => {
-    seedFakeLeads(Number(targetCount) || 213, 60);
+    seedFakeLeads(Number(targetCount) || 213);
     setValidation(null);
     setRefreshKey((x) => x + 1);
   };
 
   const fillToTarget = () => {
-    ensureLeadCount(Number(targetCount) || 213, 60);
+    ensureLeadCount(Number(targetCount) || 213);
     setValidation(null);
     setRefreshKey((x) => x + 1);
   };
@@ -39,14 +39,14 @@ const CRMPanel = () => {
 
   React.useEffect(() => {
     if (query.get('seedDemo') === '213' && leads.length < 213) {
-      seedFakeLeads(213, 60);
+      seedFakeLeads(213);
       setRefreshKey((x) => x + 1);
     }
   }, [query, leads.length]);
 
   const chartData = useMemo(() => {
-    const cutoff = Date.now() - (60 * 24 * 60 * 60 * 1000);
-    const inWindow = leads.filter((lead) => new Date(lead.createdAt).getTime() >= cutoff);
+    const startDate = new Date('2026-02-05T00:00:00.000Z').getTime();
+    const inWindow = leads.filter((lead) => new Date(lead.createdAt).getTime() >= startDate);
     const perDay = inWindow.reduce((acc, lead) => {
       const key = toDayKey(lead.createdAt);
       acc[key] = (acc[key] || 0) + 1;
@@ -54,8 +54,12 @@ const CRMPanel = () => {
     }, {});
 
     const days = [];
-    for (let i = 59; i >= 0; i -= 1) {
-      const date = new Date(Date.now() - (i * 24 * 60 * 60 * 1000));
+    const start = new Date('2026-02-05T00:00:00.000Z');
+    const today = new Date();
+    const dayCount = Math.max(Math.ceil((today.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1, 1);
+
+    for (let i = 0; i < dayCount; i += 1) {
+      const date = new Date(start.getTime() + (i * 24 * 60 * 60 * 1000));
       const key = toDayKey(date.toISOString());
       days.push({ key, value: perDay[key] || 0 });
     }
@@ -114,14 +118,14 @@ const CRMPanel = () => {
         <div className="glass-panel crm-validation" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
           <p><strong>Validation:</strong> {validation.pass ? 'PASS' : 'CHECK REQUIRED'}</p>
           <p>Total: {validation.total} · Unique emails: {validation.uniqueEmails} · Duplicates: {validation.duplicateEmails}</p>
-          <p>Missing required fields: {validation.missingFields} · In last 60 days: {validation.inRangeCount}</p>
+          <p>Missing required fields: {validation.missingFields} · In range (5 Feb → now): {validation.inRangeCount}</p>
         </div>
       )}
 
       <div className="glass-panel" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.45rem' }}>
           <BarChart3 size={16} />
-          <strong>Signups over last 60 days</strong>
+          <strong>Signups from 5 Feb to now</strong>
         </div>
         <div className="crm-chart">
           {chartData.days.map((day) => (
