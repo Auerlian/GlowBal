@@ -172,6 +172,37 @@ const normalizeOfficialLink = (link, domain) => {
 
 const getUnsplashCampusUrl = (name) => `https://source.unsplash.com/1600x900/?${encodeURIComponent(`${name} university campus`)}`;
 
+const flickrToLarge = (url = '') => {
+  // Flickr public feed returns _m.jpg; prefer larger variant when available.
+  if (!url) return null;
+  return url.replace('_m.', '_b.');
+};
+
+const getFlickrCampusImage = async (name) => {
+  const endpoint = `https://www.flickr.com/services/feeds/photos_public.gne?format=json&nojsoncallback=1&tags=${encodeURIComponent(`${name},university,campus`)}`;
+
+  try {
+    const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    if (!items.length) return null;
+
+    const candidate = items.find((item) => {
+      const title = `${item?.title || ''} ${item?.tags || ''}`.toLowerCase();
+      return !title.includes('logo') && !title.includes('icon');
+    }) || items[0];
+
+    const src = candidate?.media?.m;
+    if (!isHttpUrl(src)) return null;
+
+    return flickrToLarge(src);
+  } catch {
+    return null;
+  }
+};
+
 const getOpenverseCampusImage = async (name) => {
   const endpoint = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(`${name} university campus`)}`
     + '&page_size=12&license_type=commercial';
@@ -275,10 +306,16 @@ const addImageData = async (institution) => {
   const candidates = [];
   let imageSource = 'placeholder';
 
+  const flickrCampus = await getFlickrCampusImage(`${institution.name} ${institution.location}`);
+  if (flickrCampus) {
+    candidates.push(flickrCampus);
+    imageSource = 'flickr-search';
+  }
+
   const openverseCampus = await getOpenverseCampusImage(`${institution.name} ${institution.location}`);
   if (openverseCampus) {
     candidates.push(openverseCampus);
-    imageSource = 'openverse-search';
+    if (imageSource === 'placeholder') imageSource = 'openverse-search';
   }
 
   const unsplashCampus = getUnsplashCampusUrl(`${institution.name} ${institution.location}`);
@@ -337,7 +374,21 @@ const selectCountries = (answers = {}) => {
   return [...new Set(countries)].slice(0, 5);
 };
 
-const withImagePipeline = async (institutions = []) => Promise.all(institutions.map(addImageData));
+const withImagePipeline = async (institutions = []) => {
+  const enriched = await Promise.all(institutions.map(addImageData));
+
+  // Reduce repeated primary images across universities by rotating to next available candidate.
+  const used = new Set();
+  return enriched.map((item) => {
+    const candidates = item.imageCandidates || [];
+    const uniquePrimary = candidates.find((url) => !used.has(url)) || candidates[0] || LOCAL_IMAGE_FALLBACK;
+    used.add(uniquePrimary);
+    return {
+      ...item,
+      image: uniquePrimary
+    };
+  });
+};
 
 export const getUniversityCandidates = async (answers = {}) => {
   const countries = selectCountries(answers);
