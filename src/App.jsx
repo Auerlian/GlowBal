@@ -256,7 +256,12 @@ function App() {
           <CRMPanel />
         ) : (
           <section key={activePage} className="page-transition-panel animate-fade-in">
-            {activePage === NAV_PAGES.SIGNUP && <LandingPage onOpenCreator={() => setActivePage(NAV_PAGES.MATCH)} />}
+            {activePage === NAV_PAGES.SIGNUP && (
+              <LandingPage
+                onOpenCreator={() => setActivePage(NAV_PAGES.MATCH)}
+                onOpenAI={() => setActivePage(NAV_PAGES.AI)}
+              />
+            )}
             {activePage === NAV_PAGES.AI && <AIChatboxPage />}
             {activePage === NAV_PAGES.MATCH && renderMatchPage()}
           </section>
