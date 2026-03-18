@@ -157,6 +157,7 @@ const normalizeOfficialLink = (link, domain) => {
 
 const getClearbitLogoUrl = (domain) => `https://logo.clearbit.com/${normalizeDomain(domain)}?size=800`;
 const getGoogleFaviconUrl = (domain) => `https://www.google.com/s2/favicons?domain=${normalizeDomain(domain)}&sz=256`;
+const getUnsplashCampusUrl = (name) => `https://source.unsplash.com/1600x900/?${encodeURIComponent(`${name} university campus`)}`;
 
 const getWikimediaImage = async (name) => {
   const summaryEndpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
@@ -243,11 +244,15 @@ const addImageData = async (institution) => {
     if (wikiImage) {
       candidates.push(wikiImage);
       imageSource = 'wikimedia';
+    } else {
+      imageSource = 'search';
     }
   }
 
+  const unsplashCampus = getUnsplashCampusUrl(institution.name);
   const clearbit = getClearbitLogoUrl(institution.domain);
   const favicon = getGoogleFaviconUrl(institution.domain);
+  candidates.push(unsplashCampus);
   candidates.push(clearbit);
   candidates.push(favicon);
   candidates.push(LOCAL_IMAGE_FALLBACK);

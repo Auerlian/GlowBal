@@ -154,7 +154,63 @@ const ensureTierCoverage = (scoredItems) => {
   };
 };
 
+const pickDiverse = (items = [], count = 4, usedCountries = new Set(), usedRegions = new Set()) => {
+  const selected = [];
+  const localCountries = new Set();
+
+  const pushIfGood = (item, requireNewRegion = false) => {
+    if (!item || selected.length >= count) return;
+    const country = item.country || item.location;
+    const region = item.region;
+
+    if (localCountries.has(country)) return;
+    if (usedCountries.has(country) && localCountries.size >= 1) return;
+    if (requireNewRegion && region && usedRegions.has(region)) return;
+
+    selected.push(item);
+    if (country) {
+      localCountries.add(country);
+      usedCountries.add(country);
+    }
+    if (region) usedRegions.add(region);
+  };
+
+  // First pass: prefer both new country + new region
+  items.forEach((item) => pushIfGood(item, true));
+
+  // Second pass: prefer new country regardless of region
+  items.forEach((item) => {
+    if (selected.length >= count) return;
+    const country = item.country || item.location;
+    if (selected.includes(item) || localCountries.has(country)) return;
+    selected.push(item);
+    if (country) {
+      localCountries.add(country);
+      usedCountries.add(country);
+    }
+    if (item.region) usedRegions.add(item.region);
+  });
+
+  // Final fill if needed
+  items.forEach((item) => {
+    if (selected.length >= count) return;
+    if (selected.includes(item)) return;
+    selected.push(item);
+  });
+
+  return selected;
+};
+
 export const generateTieredMatches = (answers = {}, universities = [], profile = {}) => {
   const scored = universities.map((uni) => scoreUniversity(uni, answers, profile)).sort((a, b) => b.score - a.score);
-  return ensureTierCoverage(scored);
+  const grouped = ensureTierCoverage(scored);
+
+  const usedCountries = new Set();
+  const usedRegions = new Set();
+
+  return {
+    High: pickDiverse(grouped.High, 4, usedCountries, usedRegions),
+    Medium: pickDiverse(grouped.Medium, 4, usedCountries, usedRegions),
+    Low: pickDiverse(grouped.Low, 4, usedCountries, usedRegions)
+  };
 };
