@@ -732,7 +732,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .crm-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 0.8rem; }
 .crm-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
 .crm-table-wrap { overflow: auto; }
-.crm-table { width: 100%; border-collapse: collapse; min-width: 760px; }
+.crm-table { width: 100%; border-collapse: collapse; min-width: 680px; }
 .crm-table th, .crm-table td { text-align: left; padding: 0.55rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.08); }
 .crm-table th { font-size: 0.86rem; color: var(--glowbal-silver); text-transform: uppercase; letter-spacing: 0.04em; }
 .crm-target-input {
@@ -764,6 +764,20 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   background: linear-gradient(180deg, var(--glowbal-mint), var(--glowbal-pink));
   min-height: 2px;
 }
+.crm-chart-axis {
+  position: relative;
+  height: 20px;
+  margin-top: 0.3rem;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+.crm-chart-axis span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: var(--glowbal-silver);
+  top: 4px;
+  white-space: nowrap;
+}
 
 @media (max-width: 740px) {
   .landing-wrap, .crm-wrap, .ai-wrap { padding: 0.85rem; max-width: 100%; }
@@ -775,5 +789,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   .crm-target-input { grid-column: span 2; }
   .crm-head { align-items: flex-start; gap: 0.4rem; }
   .glass-panel { border-radius: 18px; }
-  .crm-table { min-width: 620px; }
+  .crm-table { min-width: 100%; }
+  .crm-table th, .crm-table td { font-size: 0.79rem; padding: 0.45rem 0.34rem; word-break: break-word; }
+  .crm-chart-axis span { font-size: 0.62rem; }
 }

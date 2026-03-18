@@ -46,7 +46,17 @@ const CRMPanel = () => {
     }
 
     const max = Math.max(...days.map((d) => d.value), 1);
-    return { days, max };
+    const tickEvery = 7;
+    const ticks = days
+      .map((day, index) => ({ ...day, index }))
+      .filter((day) => day.index % tickEvery === 0 || day.index === days.length - 1)
+      .map((day) => {
+        const dt = new Date(`${day.key}T00:00:00`);
+        const label = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return { key: day.key, label, leftPct: days.length > 1 ? (day.index / (days.length - 1)) * 100 : 0 };
+      });
+
+    return { days, max, ticks };
   }, [leads]);
 
   const demoLink = `${window.location.origin}${import.meta.env.BASE_URL}?crm=1&seedDemo=213`;
@@ -79,15 +89,20 @@ const CRMPanel = () => {
       </div>
 
       <div className="glass-panel" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.45rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
           <BarChart3 size={16} />
-          <strong>Signups from 5 Feb to now</strong>
+          <strong>Signups per day</strong>
         </div>
         <div className="crm-chart">
           {chartData.days.map((day) => (
             <div key={day.key} className="crm-bar-wrap" title={`${day.key}: ${day.value} signups`}>
               <div className="crm-bar" style={{ height: `${Math.max((day.value / chartData.max) * 100, day.value ? 6 : 2)}%` }} />
             </div>
+          ))}
+        </div>
+        <div className="crm-chart-axis">
+          {chartData.ticks.map((tick) => (
+            <span key={tick.key} style={{ left: `${tick.leftPct}%` }}>{tick.label}</span>
           ))}
         </div>
       </div>

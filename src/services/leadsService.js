@@ -1,8 +1,17 @@
 const STORAGE_KEY = 'glowbal_leads_v1';
 
-const FIRST_NAMES = ['Nguyen', 'Minh', 'Linh', 'Anh', 'Phuong', 'Bao', 'Trang', 'Khanh', 'Huy', 'Mai', 'Arjun', 'Aisha', 'Mateo', 'Sofia', 'Yuki', 'Amir', 'Noor', 'Diego', 'Nadia', 'Kai'];
-const LAST_NAMES = ['Tran', 'Le', 'Pham', 'Hoang', 'Vo', 'Bui', 'Dang', 'Do', 'Ngo', 'Duong', 'Kumar', 'Hassan', 'Tanaka', 'Garcia', 'Silva'];
-const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com.vn', 'outlook.com', 'proton.me', 'icloud.com'];
+const VIETNAMESE_NAMES = [
+  'Nguyễn Minh Anh', 'Trần Quỳnh Trang', 'Lê Hoàng Nam', 'Phạm Gia Hân', 'Võ Quốc Bảo', 'Đặng Khánh Linh',
+  'Bùi Anh Thư', 'Đỗ Nhật Minh', 'Ngô Phương Anh', 'Dương Tuấn Kiệt', 'Hoàng Ngọc Mai', 'Phan Gia Huy',
+  'Lý Tường Vy', 'Vũ Hải Đăng', 'Trịnh Bảo Ngọc', 'Hồ Đức Anh', 'Đinh Khánh Vy', 'Mai Quốc Việt'
+];
+
+const INTERNATIONAL_ASIAN_NAMES = [
+  '林美玲', '王子涵', '陈伟', '山田太郎', '佐藤美咲', '김민준', '이지은', 'ธนกฤต ศรีวงศ์', 'Putri Lestari',
+  'Aarav Sharma', 'Priya Nair', 'Nur Aisyah', 'Hiro Tanaka', 'Siti Amina', 'Nguyễn Hải Đăng', 'Trần Bảo Châu'
+];
+
+const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com.vn', 'outlook.com', 'icloud.com', 'proton.me', 'student.hcmus.edu.vn'];
 const GOALS = [
   'Find top CS programs in Europe',
   'Scholarship options for UK business degrees',
@@ -78,19 +87,38 @@ export const addLead = async ({ name, email, goal }) => {
 
 const SIGNUP_START_ISO = '2026-02-05T00:00:00.000Z';
 
+const toEmailSlug = (name = '', idx = 0) => {
+  const translit = name
+    .normalize('NFD')
+    .replace(/[^\p{L}\p{N}\s]/gu, '')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd')
+    .replace(/[^a-zA-Z0-9\s]/g, ' ')
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('.');
+
+  return translit || `student${100 + idx}`;
+};
+
 const createFakeLead = (idx = 0) => {
   const now = Date.now();
   const start = new Date(SIGNUP_START_ISO).getTime();
-  const first = FIRST_NAMES[idx % FIRST_NAMES.length];
-  const last = LAST_NAMES[(idx * 3) % LAST_NAMES.length];
+  const useVietnamese = idx % 5 !== 0;
+  const pool = useVietnamese ? VIETNAMESE_NAMES : INTERNATIONAL_ASIAN_NAMES;
+  const name = pool[idx % pool.length];
   const createdAtMs = start + Math.floor(Math.random() * Math.max(now - start, 1));
   const createdAt = new Date(createdAtMs).toISOString();
   const updatedAt = new Date(createdAtMs + Math.floor(Math.random() * 36 * 60 * 60 * 1000)).toISOString();
-  const email = `${first}.${last}${100 + idx}@${EMAIL_DOMAINS[idx % EMAIL_DOMAINS.length]}`.toLowerCase();
+  const emailLocal = toEmailSlug(name, idx);
+  const email = `${emailLocal}${100 + idx}@${EMAIL_DOMAINS[idx % EMAIL_DOMAINS.length]}`.toLowerCase();
 
   return {
     id: crypto.randomUUID(),
-    name: `${first} ${last}`,
+    name,
     email,
     goal: GOALS[idx % GOALS.length],
     source: idx % 4 === 0 ? 'instagram' : idx % 3 === 0 ? 'tiktok' : 'landing-signup',
