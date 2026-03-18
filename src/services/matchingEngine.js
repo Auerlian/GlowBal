@@ -57,8 +57,16 @@ const tierByScore = (score) => {
   return 'Low';
 };
 
+const getProfileFields = (profile = {}) => {
+  const direct = profile?.inferredFields || [];
+  const fromSummary = profile?.summary?.subjectKeywords || [];
+  return [...new Set([...direct, ...fromSummary])];
+};
+
+const getProfileDegree = (profile = {}) => profile?.inferredDegree || profile?.summary?.degreeIntent || null;
+
 const profileFieldMatch = (uni, profile) => {
-  const fields = profile?.inferredFields || [];
+  const fields = getProfileFields(profile);
   if (!fields.length) return null;
   const match = fields.find((field) => uni.subjectStrength.includes(field));
   return match || null;
@@ -81,9 +89,10 @@ const scoreUniversity = (uni, answers, profile) => {
   }
 
   const inferredField = profileFieldMatch(uni, profile);
-  if (!preferredField && inferredField) {
-    score += WEIGHTS.field * 0.7;
-    reasonCandidates.push({ points: WEIGHTS.field * 0.7, text: `CV signal match: ${inferredField}` });
+  if (inferredField) {
+    const cvFieldPoints = preferredField ? WEIGHTS.field * 0.28 : WEIGHTS.field * 0.7;
+    score += cvFieldPoints;
+    reasonCandidates.push({ points: cvFieldPoints, text: `CV signal match: ${inferredField}` });
   }
 
   const preferredBudgetBand = BUDGET_MAP[getFirstAnswer(answers, 'q_budget')];
@@ -113,11 +122,16 @@ const scoreUniversity = (uni, answers, profile) => {
   }
 
   const preferredDegree = getFirstAnswer(answers, 'q_degree');
-  const inferredDegree = profile?.inferredDegree;
+  const inferredDegree = getProfileDegree(profile);
   const targetDegree = preferredDegree || inferredDegree;
   if (targetDegree && uni.degreeLevels.includes(targetDegree)) {
-    score += WEIGHTS.degree;
-    reasonCandidates.push({ points: WEIGHTS.degree, text: `Degree availability fit (${targetDegree})` });
+    const degreePoints = preferredDegree ? WEIGHTS.degree : WEIGHTS.degree * 0.8;
+    score += degreePoints;
+    reasonCandidates.push({ points: degreePoints, text: `Degree availability fit (${targetDegree})` });
+
+    if (preferredDegree && inferredDegree && preferredDegree === inferredDegree) {
+      reasonCandidates.push({ points: WEIGHTS.degree * 0.25, text: `CV corroborates degree intent (${inferredDegree})` });
+    }
   }
 
   const preferredVibe = VIBE_MAP[getFirstAnswer(answers, 'q_vibe')];
@@ -130,11 +144,21 @@ const scoreUniversity = (uni, answers, profile) => {
   const tier = tierByScore(normalizedScore);
   const matchReasons = reasonCandidates.sort((a, b) => b.points - a.points).slice(0, 4).map((item) => item.text);
 
+  const profileFields = getProfileFields(profile);
+  const cvDefaultReason = profileFields.length
+    ? `CV highlights ${profileFields.slice(0, 2).join(' / ')} as strongest interests`
+    : null;
+
+  const hasCvReason = matchReasons.some((reason) => /cv/i.test(reason));
+  if (cvDefaultReason && !hasCvReason) {
+    matchReasons.unshift(cvDefaultReason);
+  }
+
   return {
     ...uni,
     score: normalizedScore,
     tier,
-    matchReasons: matchReasons.length ? matchReasons : ['Broad compatibility with your profile and preference answers']
+    matchReasons: matchReasons.length ? matchReasons.slice(0, 4) : ['Broad compatibility with your profile and preference answers']
   };
 };
 

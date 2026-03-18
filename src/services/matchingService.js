@@ -1,6 +1,8 @@
 import { generateTieredMatches } from './matchingEngine';
-import { parseProfileSignals } from './profileParser';
 import { getUniversityCandidates } from './universityDataService';
+import { parseCVFile } from './cvFileParser';
+import { buildProfileFromText } from './profileSignalParser';
+import { parseProfileSignals } from './profileParser';
 
 const profileQuestions = [
   {
@@ -69,7 +71,34 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const processCV = async (file) => {
   await delay(900);
-  const profileSignals = await parseProfileSignals(file);
+
+  let profileSignals;
+  try {
+    const { text, metadata } = await parseCVFile(file);
+    const richerProfile = buildProfileFromText(text);
+
+    profileSignals = {
+      source: 'parsed-cv',
+      fileMeta: metadata,
+      rawTextSample: text.slice(0, 1200),
+      inferredFields: richerProfile.summary?.subjectKeywords || [],
+      inferredDegree: richerProfile.summary?.degreeIntent || null,
+      inferredAnswers: richerProfile.inferredAnswers || {},
+      summary: richerProfile.summary || {},
+      confidence: richerProfile.confidence || {}
+    };
+  } catch {
+    // Fallback parser for edge cases; still keep flow usable.
+    const fallbackProfile = await parseProfileSignals(file);
+    profileSignals = {
+      source: 'fallback-parser',
+      ...fallbackProfile,
+      summary: fallbackProfile?.summary || {
+        subjectKeywords: fallbackProfile?.inferredFields || [],
+        degreeIntent: fallbackProfile?.inferredDegree || null
+      }
+    };
+  }
 
   return {
     status: 'success',
@@ -80,7 +109,11 @@ export const processCV = async (file) => {
 
 export const generateResults = async (answers = {}, profileSignals = {}) => {
   await delay(800);
-  const { universities, source } = await getUniversityCandidates(answers);
-  const tiers = generateTieredMatches(answers, universities, profileSignals);
+
+  const inferredAnswers = profileSignals?.inferredAnswers || {};
+  const mergedAnswers = { ...inferredAnswers, ...answers };
+
+  const { universities, source } = await getUniversityCandidates(mergedAnswers);
+  const tiers = generateTieredMatches(mergedAnswers, universities, profileSignals);
   return { ...tiers, source };
 };
