@@ -735,6 +735,14 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .crm-table { width: 100%; border-collapse: collapse; min-width: 760px; }
 .crm-table th, .crm-table td { text-align: left; padding: 0.55rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.08); }
 .crm-table th { font-size: 0.86rem; color: var(--glowbal-silver); text-transform: uppercase; letter-spacing: 0.04em; }
+.crm-target-input {
+  width: 110px;
+  border: 1px solid rgba(0,0,0,0.14);
+  border-radius: 999px;
+  padding: 0.55rem 0.7rem;
+  font-family: inherit;
+}
+.crm-validation p { color: var(--glowbal-silver); font-size: 0.9rem; margin-bottom: 0.2rem; }
 .crm-chart {
   height: 150px;
   display: grid;

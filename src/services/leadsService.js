@@ -75,29 +75,80 @@ export const addLead = async ({ name, email, goal }) => {
   return payload;
 };
 
-export const seedFakeLeads = (count = 213, daysBack = 60) => {
+const createFakeLead = (idx = 0, daysBack = 60) => {
   const now = Date.now();
-  const generated = Array.from({ length: count }).map((_, idx) => {
-    const first = FIRST_NAMES[idx % FIRST_NAMES.length];
-    const last = LAST_NAMES[(idx * 3) % LAST_NAMES.length];
-    const createdAtMs = now - Math.floor(Math.random() * daysBack * 24 * 60 * 60 * 1000);
-    const createdAt = new Date(createdAtMs).toISOString();
-    const updatedAt = new Date(createdAtMs + Math.floor(Math.random() * 36 * 60 * 60 * 1000)).toISOString();
-    const email = `${first}.${last}${100 + idx}@${idx % 2 === 0 ? 'gmail.com' : 'outlook.com'}`.toLowerCase();
+  const first = FIRST_NAMES[idx % FIRST_NAMES.length];
+  const last = LAST_NAMES[(idx * 3) % LAST_NAMES.length];
+  const createdAtMs = now - Math.floor(Math.random() * daysBack * 24 * 60 * 60 * 1000);
+  const createdAt = new Date(createdAtMs).toISOString();
+  const updatedAt = new Date(createdAtMs + Math.floor(Math.random() * 36 * 60 * 60 * 1000)).toISOString();
+  const email = `${first}.${last}${100 + idx}@${idx % 2 === 0 ? 'gmail.com' : 'outlook.com'}`.toLowerCase();
 
-    return {
-      id: crypto.randomUUID(),
-      name: `${first} ${last}`,
-      email,
-      goal: GOALS[idx % GOALS.length],
-      source: idx % 4 === 0 ? 'instagram' : idx % 3 === 0 ? 'tiktok' : 'landing-signup',
-      createdAt,
-      updatedAt
-    };
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return {
+    id: crypto.randomUUID(),
+    name: `${first} ${last}`,
+    email,
+    goal: GOALS[idx % GOALS.length],
+    source: idx % 4 === 0 ? 'instagram' : idx % 3 === 0 ? 'tiktok' : 'landing-signup',
+    createdAt,
+    updatedAt
+  };
+};
 
+export const seedFakeLeads = (count = 213, daysBack = 60) => {
+  const generated = Array.from({ length: count }).map((_, idx) => createFakeLead(idx, daysBack));
+  generated.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   setLeads(generated);
   return generated;
+};
+
+export const ensureLeadCount = (targetCount = 213, daysBack = 60) => {
+  const existing = getLeads();
+  if (existing.length >= targetCount) return existing;
+
+  const seenEmails = new Set(existing.map((lead) => lead.email));
+  const next = [...existing];
+  let idx = existing.length;
+
+  while (next.length < targetCount) {
+    const candidate = createFakeLead(idx, daysBack);
+    idx += 1;
+    if (seenEmails.has(candidate.email)) continue;
+    seenEmails.add(candidate.email);
+    next.push(candidate);
+  }
+
+  next.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  setLeads(next);
+  return next;
+};
+
+export const validateLeadData = (leads = getLeads()) => {
+  const duplicates = new Set();
+  const seen = new Set();
+  let missingFields = 0;
+
+  leads.forEach((lead) => {
+    if (!lead?.name || !lead?.email || !lead?.createdAt) missingFields += 1;
+    if (seen.has(lead.email)) duplicates.add(lead.email);
+    seen.add(lead.email);
+  });
+
+  const now = Date.now();
+  const sixtyDaysAgo = now - (60 * 24 * 60 * 60 * 1000);
+  const inRangeCount = leads.filter((lead) => {
+    const t = new Date(lead.createdAt).getTime();
+    return Number.isFinite(t) && t >= sixtyDaysAgo && t <= now;
+  }).length;
+
+  return {
+    total: leads.length,
+    uniqueEmails: seen.size,
+    duplicateEmails: duplicates.size,
+    missingFields,
+    inRangeCount,
+    pass: duplicates.size === 0 && missingFields === 0
+  };
 };
 
 export const exportLeadsCsv = () => {
