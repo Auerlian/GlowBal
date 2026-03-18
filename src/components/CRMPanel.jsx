@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Copy, Download, Mail, BarChart3, Users } from 'lucide-react';
-import { exportLeadsCsv, getLeads, seedFakeLeads, ensureLeadCount, validateLeadData } from '../services/leadsService';
+import { Copy, Download, Mail, BarChart3 } from 'lucide-react';
+import { exportLeadsCsv, getLeads, seedFakeLeads } from '../services/leadsService';
 
 const toDayKey = (iso) => {
   const d = new Date(iso);
@@ -9,32 +9,13 @@ const toDayKey = (iso) => {
 
 const CRMPanel = () => {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [targetCount, setTargetCount] = useState(213);
-  const [validation, setValidation] = useState(null);
   const leads = useMemo(() => getLeads(), [refreshKey]);
 
   const query = useMemo(() => new URLSearchParams(window.location.search), []);
-
   const allEmails = leads.map((l) => l.email).filter(Boolean).join(', ');
 
   const copyEmails = async () => {
     await navigator.clipboard.writeText(allEmails);
-  };
-
-  const generateDemoLeads = () => {
-    seedFakeLeads(Number(targetCount) || 213);
-    setValidation(null);
-    setRefreshKey((x) => x + 1);
-  };
-
-  const fillToTarget = () => {
-    ensureLeadCount(Number(targetCount) || 213);
-    setValidation(null);
-    setRefreshKey((x) => x + 1);
-  };
-
-  const runValidation = () => {
-    setValidation(validateLeadData(getLeads()));
   };
 
   React.useEffect(() => {
@@ -78,23 +59,6 @@ const CRMPanel = () => {
       </div>
 
       <div className="crm-actions">
-        <input
-          type="number"
-          min={1}
-          value={targetCount}
-          onChange={(e) => setTargetCount(e.target.value)}
-          className="crm-target-input"
-          aria-label="Target signup count"
-        />
-        <button className="btn-secondary" onClick={generateDemoLeads}>
-          <Users size={15} /> Regenerate target set
-        </button>
-        <button className="btn-secondary" onClick={fillToTarget}>
-          Fill to target
-        </button>
-        <button className="btn-secondary" onClick={runValidation}>
-          Validate data
-        </button>
         <button className="btn-secondary" onClick={copyEmails} disabled={!leads.length}>
           <Copy size={15} /> Copy all emails
         </button>
@@ -113,14 +77,6 @@ const CRMPanel = () => {
         <p style={{ fontWeight: 700, marginBottom: '0.35rem' }}>Direct CRM demo link</p>
         <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem', wordBreak: 'break-all' }}>{demoLink}</p>
       </div>
-
-      {validation && (
-        <div className="glass-panel crm-validation" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
-          <p><strong>Validation:</strong> {validation.pass ? 'PASS' : 'CHECK REQUIRED'}</p>
-          <p>Total: {validation.total} · Unique emails: {validation.uniqueEmails} · Duplicates: {validation.duplicateEmails}</p>
-          <p>Missing required fields: {validation.missingFields} · In range (5 Feb → now): {validation.inRangeCount}</p>
-        </div>
-      )}
 
       <div className="glass-panel" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.45rem' }}>

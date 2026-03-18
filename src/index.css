@@ -766,7 +766,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 }
 
 @media (max-width: 740px) {
-  .landing-wrap, .crm-wrap, .ai-wrap { padding: 0.85rem; }
+  .landing-wrap, .crm-wrap, .ai-wrap { padding: 0.85rem; max-width: 100%; }
   .landing-actions .btn-primary, .landing-actions .btn-secondary { width: 100%; justify-content: center; }
   .crm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
   .crm-actions .btn-primary,
@@ -774,4 +774,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   .crm-target-input { width: 100%; justify-content: center; }
   .crm-target-input { grid-column: span 2; }
   .crm-head { align-items: flex-start; gap: 0.4rem; }
+  .glass-panel { border-radius: 18px; }
+  .crm-table { min-width: 620px; }
 }
