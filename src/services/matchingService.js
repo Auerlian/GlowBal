@@ -36,41 +36,29 @@ const profileQuestions = [
     options: ['Engineering & Tech', 'Business & Economics', 'Arts & Humanities', 'Life & Medical Sciences', 'Social Sciences']
   },
   {
-    id: 'q_weather',
-    text: 'What climate do you thrive in?',
-    type: 'single',
-    options: ['Warm & Sunny year-round', 'Distinct 4 Seasons', 'Cool & Rainy', 'Snowy & Cold']
-  },
-  {
-    id: 'q_vibe',
-    text: 'How important is the social/party scene to you?',
-    type: 'single',
-    options: ['Very Important (Work hard, play hard)', 'Moderately Important', 'Not Important (Focused purely on academics)']
-  },
-  {
-    id: 'q_class_size',
-    text: 'Do you prefer large lectures or intimate seminars?',
-    type: 'single',
-    options: ['Large Lectures (500+ students)', 'Medium Classes (~50 students)', 'Intimate Seminars (<20 students)']
-  },
-  {
     id: 'q_work',
     text: 'Are you planning to work part-time while studying?',
     type: 'single',
     options: ['Yes, to cover living costs', 'Yes, for experience only', 'No, I want to focus on studies']
-  },
-  {
-    id: 'q_postgrad_goal',
-    text: 'What is your ultimate goal after graduation?',
-    type: 'single',
-    options: ['Stay and work in the country of study', 'Return to my home country', 'Travel or move to a third country', 'Continue in academia / research']
   }
 ];
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const processCV = async (file) => {
-  await delay(900);
+  await delay(500);
+
+  if (!file) {
+    return {
+      status: 'success',
+      data: profileQuestions,
+      profileSignals: {
+        source: 'no-cv',
+        summary: {},
+        inferredAnswers: {}
+      }
+    };
+  }
 
   let profileSignals;
   try {

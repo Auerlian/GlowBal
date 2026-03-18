@@ -29,6 +29,7 @@ body {
   overflow-x: hidden;
   background-image: radial-gradient(circle at 15% 50%, rgba(255, 77, 140, 0.05), transparent 25%), radial-gradient(circle at 85% 30%, rgba(0, 180, 216, 0.05), transparent 25%);
   background-attachment: fixed;
+  padding-top: env(safe-area-inset-top);
 }
 h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .text-gradient {
@@ -88,7 +89,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   transform: rotate(45deg); opacity: 0; filter: blur(0.1px); box-shadow: 0 0 16px color-mix(in srgb, var(--ambient-color) 30%, transparent);
   animation-name: ambientFloat; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform, opacity;
 }
-.topbar { width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0.2rem 1rem 0; min-height: 52px; gap: 0.4rem; }
+.topbar { width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0.25rem 1rem 0.25rem; min-height: 52px; gap: 0.4rem; }
 .brand-button { border: none; background: transparent; cursor: pointer; padding: 0; border-radius: 14px; }
 .top-nav {
   display: inline-flex;
@@ -136,6 +137,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .hero-intro-subtitle { font-size: clamp(0.92rem, 3.5vw, 1rem); color: var(--glowbal-silver); line-height: 1.4; }
 .upload-dropzone { padding: var(--space-2); }
 .hero-start-btn { width: min(100%, 380px); justify-content: center; }
+.hero-action-row { display: flex; flex-wrap: wrap; gap: 0.55rem; justify-content: center; width: 100%; }
 
 .loading-state { height: 60vh; gap: 1.2rem; }
 .loading-state h2 { font-size: 1.7rem; }
@@ -609,10 +611,11 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 }
 @media (max-width: 740px) {
   .container { padding: 0 12px; }
-  .topbar { min-height: 44px; }
+  .app-main { padding-top: 0.55rem; }
+  .topbar { min-height: 44px; gap: 0.35rem; padding-top: 0.45rem; }
   .top-nav { width: 100%; justify-content: center; }
-  .top-nav-link { flex: 1; justify-content: center; }
-  .brand-video, .brand-fallback { height: 128px; }
+  .top-nav-link { flex: 1; justify-content: center; min-height: 38px; font-size: 0.95rem; padding: 0.42rem 0.5rem; }
+  .brand-video, .brand-fallback { height: 110px; }
   .question-shell { padding-bottom: 0.9rem; }
   .question-card { gap: 0.95rem; padding: 1rem; border-radius: 18px; }
   .question-meta-row { align-items: flex-start; }

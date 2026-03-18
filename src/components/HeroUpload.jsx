@@ -3,12 +3,12 @@ import { Upload, ChevronRight, Check, ShieldCheck, Sparkles } from 'lucide-react
 
 const howItWorks = [
   {
-    title: 'Parse your CV',
-    detail: 'Extracts level, interests, and experience signals.'
+    title: 'Quick preferences',
+    detail: 'Answer 6 focused questions: budget, region, style, goals.'
   },
   {
-    title: 'Capture preferences',
-    detail: '10 focused questions: budget, region, style, goals.'
+    title: 'Optional CV upload',
+    detail: 'Add a CV for extra signal quality, or skip and continue.'
   },
   {
     title: 'Rank + explain',
@@ -16,7 +16,7 @@ const howItWorks = [
   }
 ];
 
-const HeroUpload = ({ onUpload }) => {
+const HeroUpload = ({ onUpload, onSkipCV }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [file, setFile] = useState(null);
 
@@ -57,7 +57,7 @@ const HeroUpload = ({ onUpload }) => {
           Build a realistic university shortlist in <span className="text-gradient">minutes.</span>
         </h2>
         <p className="hero-intro-subtitle">
-          CV + preference matching with transparent scoring.
+          6 quick questions. CV upload is optional.
         </p>
       </div>
 
@@ -124,7 +124,7 @@ const HeroUpload = ({ onUpload }) => {
         ) : (
           <div className="flex-col flex-center" style={{ gap: '0.5rem' }}>
             <Upload size={34} color={isHovered ? 'var(--glowbal-mint)' : 'var(--glowbal-pink)'} style={{ transition: 'all 0.3s ease' }} />
-            <h3 style={{ fontSize: '1rem' }}>Upload your CV to begin matching</h3>
+            <h3 style={{ fontSize: '1rem' }}>Upload your CV (optional)</h3>
             <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>Drag/drop or click to browse</p>
           </div>
         )}
@@ -137,11 +137,16 @@ const HeroUpload = ({ onUpload }) => {
         </div>
         <p style={{ fontSize: '0.84rem', lineHeight: '1.3' }}>Only your CV + answers are used for this run. No hidden profiling.</p>
       </div>
-      {file && (
-        <button className="btn-primary animate-slide-in hero-start-btn" onClick={(e) => { e.stopPropagation(); submitCV(); }} style={{ marginTop: '0.2rem' }}>
-          Start profile analysis <ChevronRight size={18} />
+      <div className="hero-action-row">
+        {file && (
+          <button className="btn-primary animate-slide-in hero-start-btn" onClick={(e) => { e.stopPropagation(); submitCV(); }} style={{ marginTop: '0.2rem' }}>
+            Start with CV <ChevronRight size={18} />
+          </button>
+        )}
+        <button className="btn-secondary hero-start-btn" onClick={onSkipCV} type="button">
+          Continue without CV <ChevronRight size={16} />
         </button>
-      )}
+      </div>
     </div>
   );
 };

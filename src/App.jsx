@@ -180,7 +180,7 @@ function App() {
   const renderMatchPage = () => (
     <>
       {errorMessage && renderErrorState()}
-      {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
+      {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} onSkipCV={() => handleCVUpload(null)} />}
       {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
 
       {currentState === STATES.QUESTIONNAIRE && questions.length > 0 && (
