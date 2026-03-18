@@ -34,14 +34,27 @@ const COUNTRY_BUDGET_BAND = {
 
 const REGION_TO_COUNTRIES = {
   'North America': ['United States', 'Canada'],
-  Europe: ['United Kingdom', 'Germany', 'France', 'Netherlands', 'Sweden'],
+  Europe: ['United Kingdom', 'Germany', 'France', 'Netherlands', 'Sweden', 'Switzerland'],
   Asia: ['Singapore', 'Japan', 'South Korea', 'China', 'India'],
-  Oceania: ['Australia']
+  Oceania: ['Australia'],
+  'South America': ['Brazil', 'Argentina', 'Chile', 'Colombia'],
+  Africa: ['South Africa', 'Egypt', 'Nigeria', 'Kenya']
 };
 
 const BASE_URL = (typeof import.meta !== 'undefined' && import.meta?.env?.BASE_URL) ? import.meta.env.BASE_URL : '/';
 const LOCAL_IMAGE_FALLBACK = `${BASE_URL}images/university-placeholder.svg`;
 
+
+const UNIVERSITY_LANDMARK_IMAGES = {
+  'University of Oxford': [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Radcliffe_Camera%2C_Oxford_-_Oct_2006.jpg/1600px-Radcliffe_Camera%2C_Oxford_-_Oct_2006.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Oxford_-_All_Souls_College.jpg/1600px-Oxford_-_All_Souls_College.jpg'
+  ],
+  'University of Cambridge': [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/King%27s_College_Chapel%2C_Cambridge%2C_UK_-_Diliff.jpg/1600px-King%27s_College_Chapel%2C_Cambridge%2C_UK_-_Diliff.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Cambridge_University%2C_Trinity_College.jpg/1600px-Cambridge_University%2C_Trinity_College.jpg'
+  ]
+};
 
 const FALLBACK_UNIVERSITIES = [
   {
@@ -180,6 +193,7 @@ const scoreImageCandidate = (candidate) => {
 
   let score = 0;
   if (CAMPUS_HINT_RE.test(hay)) score += 3;
+  if (candidate?.source === 'curated-landmark') score += 6;
   if (hay.includes('commons.wikimedia.org') || hay.includes('wikipedia.org')) score += 2;
   if (hay.includes('staticflickr.com')) score += 1;
   if (hay.includes('source.unsplash.com')) score += 1;
@@ -408,27 +422,36 @@ const normalizeInstitution = (item) => {
 const addImageData = async (institution) => {
   const candidates = [];
 
+  const curated = UNIVERSITY_LANDMARK_IMAGES[institution.name] || [];
+  curated.forEach((url) => {
+    candidates.push(toImageCandidate({
+      url,
+      source: 'curated-landmark',
+      title: `${institution.name} ${institution.location} landmark`
+    }));
+  });
+
   const wikidataCommons = await getWikidataCommonsCampusImage(institution.name, institution.location);
   if (wikidataCommons) candidates.push(wikidataCommons);
 
-  const wikiImage = await getWikimediaImage(`${institution.name} campus`);
+  const wikiImage = await getWikimediaImage(`${institution.name} ${institution.location} landmark`);
   if (wikiImage) candidates.push(wikiImage);
 
   // Optional campus-image fallbacks only.
   candidates.push(toImageCandidate({
-    url: getUnsplashCampusUrl(`${institution.name} ${institution.location}`),
+    url: getUnsplashCampusUrl(`${institution.name} ${institution.location} landmarks campus`),
     source: 'unsplash-campus',
-    title: `${institution.name} campus`
+    title: `${institution.name} ${institution.location} landmarks campus`
   }));
 
-  const flickrCampus = await getFlickrCampusImage(`${institution.name} ${institution.location}`);
+  const flickrCampus = await getFlickrCampusImage(`${institution.name} ${institution.location} landmarks campus`);
   if (flickrCampus) candidates.push(flickrCampus);
 
   if (institution.explicitImage) {
     candidates.push(toImageCandidate({
       url: institution.explicitImage,
       source: 'explicit',
-      title: `${institution.name} explicit image`
+      title: `${institution.name} ${institution.location} campus`
     }));
   }
 
@@ -471,10 +494,10 @@ const selectCountries = (answers = {}) => {
   const countries = preferredContinents.flatMap((region) => REGION_TO_COUNTRIES[region] || []);
 
   if (!countries.length) {
-    return ['United Kingdom', 'United States', 'Canada', 'Germany', 'Australia'];
+    return [];
   }
 
-  return [...new Set(countries)].slice(0, 5);
+  return [...new Set(countries)];
 };
 
 const withImagePipeline = async (institutions = []) => {
@@ -508,20 +531,43 @@ export const getUniversityCandidates = async (answers = {}) => {
   const countries = selectCountries(answers);
 
   try {
-    const liveBatches = await Promise.all(countries.map((country) => fetchByCountry(country)));
+    let liveBatches;
+
+    if (countries.length > 0) {
+      liveBatches = await Promise.all(countries.map((country) => fetchByCountry(country)));
+    } else {
+      const allRes = await fetch('https://universities.hipolabs.com/search');
+      if (!allRes.ok) throw new Error('Failed to load global university dataset');
+      const all = await allRes.json();
+      liveBatches = [all];
+    }
+
     const normalizedLive = uniqueById(liveBatches.flat().map(normalizeInstitution));
-    const live = (await withImagePipeline(normalizedLive)).slice(0, 40);
+    const imageEnrichedHead = await withImagePipeline(normalizedLive.slice(0, 220));
+    const remainingTail = normalizedLive.slice(220).map((item) => ({
+      ...item,
+      image: item.explicitImage || LOCAL_IMAGE_FALLBACK,
+      imageCandidates: [item.explicitImage, LOCAL_IMAGE_FALLBACK].filter(Boolean),
+      imageCandidateMeta: [],
+      imageFallback: LOCAL_IMAGE_FALLBACK,
+      imageSource: item.explicitImage ? 'explicit' : 'placeholder'
+    }));
+
+    const live = uniqueById([...imageEnrichedHead, ...remainingTail]);
 
     if (live.length >= 12) {
-      return { source: 'live', universities: live };
+      return { source: 'live', universities: live, totalCandidates: live.length };
     }
 
     const fallback = await withImagePipeline(uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution)));
-    return { source: 'live+fallback', universities: uniqueById([...live, ...fallback]).slice(0, 40) };
+    const merged = uniqueById([...live, ...fallback]);
+    return { source: 'live+fallback', universities: merged, totalCandidates: merged.length };
   } catch {
+    const fallback = await withImagePipeline(uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution)));
     return {
       source: 'fallback',
-      universities: await withImagePipeline(uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution)))
+      universities: fallback,
+      totalCandidates: fallback.length
     };
   }
 };

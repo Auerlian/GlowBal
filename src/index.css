@@ -260,6 +260,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .results-header h1 { font-size: 2.3rem; line-height: 1.1; }
 .results-header p { color: var(--glowbal-silver); max-width: 740px; margin: 0 auto; }
 .report-header p { max-width: 680px; }
+.results-pool-size { font-size: 0.86rem; color: var(--glowbal-dark-alt); font-weight: 700; }
 
 .report-menu-bar { padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 .report-menu-actions { display: flex; align-items: center; gap: 0.6rem; }
@@ -466,8 +467,9 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
 .results-footer-cta { text-align: center; padding-top: 0.3rem; }
 
 .uni-fullpage { display: grid; gap: 0.9rem; width: 100%; }
-.uni-full-hero { position: relative; min-height: 360px; overflow: hidden; border-radius: 22px; }
-.uni-full-hero-image { width: 100%; height: 100%; min-height: 360px; object-fit: cover; display: block; }
+.uni-full-topbar { display: flex; justify-content: flex-start; }
+.uni-full-hero { position: relative; height: 420px; overflow: hidden; border-radius: 22px; }
+.uni-full-hero-image { width: 100%; height: 420px; object-fit: cover; display: block; }
 .uni-full-hero-overlay {
   position: absolute;
   inset: 0;
@@ -601,6 +603,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 800; letter-spacing: -0.02em; }
   .report-detail-head { padding-right: 48px; }
   .mentor-layout { grid-template-columns: 1fr; }
   .uni-full-grid { grid-template-columns: 1fr; }
+  .uni-full-hero, .uni-full-hero-image { height: 340px; }
   .mentor-advanced-grid { grid-template-columns: 1fr; }
   .ai-layout { grid-template-columns: 1fr; }
 }

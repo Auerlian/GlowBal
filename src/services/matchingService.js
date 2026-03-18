@@ -113,7 +113,7 @@ export const generateResults = async (answers = {}, profileSignals = {}) => {
   const inferredAnswers = profileSignals?.inferredAnswers || {};
   const mergedAnswers = { ...inferredAnswers, ...answers };
 
-  const { universities, source } = await getUniversityCandidates(mergedAnswers);
+  const { universities, source, totalCandidates } = await getUniversityCandidates(mergedAnswers);
   const tiers = generateTieredMatches(mergedAnswers, universities, profileSignals);
-  return { ...tiers, source };
+  return { ...tiers, source, totalCandidates: totalCandidates || universities.length };
 };

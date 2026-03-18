@@ -173,11 +173,14 @@ const UniversityFullPage = ({ item, isShortlisted, onToggleShortlist, onBack }) 
 
   return (
     <section className="uni-fullpage animate-fade-in">
+      <div className="uni-full-topbar">
+        <button className="btn-secondary" onClick={onBack}><ArrowLeft size={15} /> Back to matches</button>
+      </div>
+
       <div className="uni-full-hero glass-panel">
         <UniversityImage item={item} className="uni-full-hero-image" />
         <div className="uni-full-hero-overlay" />
         <div className="uni-full-hero-content">
-          <button className="btn-secondary" onClick={onBack}><ArrowLeft size={15} /> Back to matches</button>
           <h1>{item.name}</h1>
           <p>{item.location}</p>
           <div className="report-meta-row">
@@ -306,6 +309,7 @@ const ResultsDashboard = ({ results }) => {
       <header className="results-header report-header">
         <h1>Your <span className="text-gradient">GlowBal</span> match report</h1>
         <p>Select a university to open a full-screen details page.</p>
+        <p className="results-pool-size">Candidate pool scanned: {results.totalCandidates?.toLocaleString?.() || results.totalCandidates || 0} universities</p>
       </header>
 
       <section className="glass-panel report-menu-bar">
