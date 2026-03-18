@@ -41,22 +41,6 @@ const REGION_TO_COUNTRIES = {
 
 const LOCAL_IMAGE_FALLBACK = `${import.meta.env.BASE_URL}images/university-placeholder.svg`;
 
-const CAMPUS_IMAGE_MAP = {
-  'university of oxford': 'https://commons.wikimedia.org/wiki/Special:FilePath/Radcliffe_Camera%2C_Oxford_-_Oct_2006.jpg',
-  'university of cambridge': 'https://commons.wikimedia.org/wiki/Special:FilePath/King%27s_College_Chapel%2C_Cambridge%2C_UK_-_Diliff.jpg',
-  'massachusetts institute of technology': 'https://commons.wikimedia.org/wiki/Special:FilePath/MIT_Dome_night1.jpg',
-  'stanford university': 'https://commons.wikimedia.org/wiki/Special:FilePath/Stanford_Memorial_Church_2011.jpg',
-  'university of toronto': 'https://commons.wikimedia.org/wiki/Special:FilePath/University_College%2C_University_of_Toronto_%282015%29_-_2.jpg',
-  'university of melbourne': 'https://commons.wikimedia.org/wiki/Special:FilePath/Old_Arts_Building%2C_University_of_Melbourne.jpg',
-  'technical university of munich': 'https://commons.wikimedia.org/wiki/Special:FilePath/TUM_Stammgelaende_2012.jpg',
-  'technische universitat munchen': 'https://commons.wikimedia.org/wiki/Special:FilePath/TUM_Stammgelaende_2012.jpg',
-  'école polytechnique': 'https://commons.wikimedia.org/wiki/Special:FilePath/%C3%89cole_polytechnique_-_Palaiseau.jpg',
-  'ecole polytechnique': 'https://commons.wikimedia.org/wiki/Special:FilePath/%C3%89cole_polytechnique_-_Palaiseau.jpg',
-  'national university of singapore': 'https://commons.wikimedia.org/wiki/Special:FilePath/NUS_University_Hall.jpg',
-  'university of tokyo': 'https://commons.wikimedia.org/wiki/Special:FilePath/Yasuda_Auditorium_-_Tokyo_University_03.jpg',
-  'seoul national university': 'https://commons.wikimedia.org/wiki/Special:FilePath/Seoul_National_University_Main_Gate.jpg',
-  'eth zurich': 'https://commons.wikimedia.org/wiki/Special:FilePath/ETH_Zentrum.jpg'
-};
 
 const FALLBACK_UNIVERSITIES = [
   {
@@ -146,7 +130,6 @@ const FALLBACK_UNIVERSITIES = [
 ];
 
 const slugify = (value = '') => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-const normalizeNameKey = (value = '') => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
 const inferSubjectStrength = (name = '') => {
   const n = name.toLowerCase();
@@ -188,6 +171,32 @@ const normalizeOfficialLink = (link, domain) => {
 };
 
 const getUnsplashCampusUrl = (name) => `https://source.unsplash.com/1600x900/?${encodeURIComponent(`${name} university campus`)}`;
+
+const getOpenverseCampusImage = async (name) => {
+  const endpoint = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(`${name} university campus`)}`
+    + '&page_size=12&license_type=commercial';
+
+  try {
+    const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const results = Array.isArray(data?.results) ? data.results : [];
+
+    const candidate = results.find((img) => {
+      const url = img?.url;
+      if (!isHttpUrl(url)) return false;
+      const title = `${img?.title || ''} ${img?.foreign_landing_url || ''}`.toLowerCase();
+      if (title.includes('logo') || title.includes('icon')) return false;
+      const w = Number(img?.width || 0);
+      const h = Number(img?.height || 0);
+      return w >= 900 && h >= 500;
+    }) || results.find((img) => isHttpUrl(img?.url));
+
+    return candidate?.url || null;
+  } catch {
+    return null;
+  }
+};
 
 const getWikimediaImage = async (name) => {
   const summaryEndpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
@@ -266,10 +275,10 @@ const addImageData = async (institution) => {
   const candidates = [];
   let imageSource = 'placeholder';
 
-  const mappedCampus = CAMPUS_IMAGE_MAP[normalizeNameKey(institution.name)] || null;
-  if (mappedCampus) {
-    candidates.push(mappedCampus);
-    imageSource = 'curated-campus-map';
+  const openverseCampus = await getOpenverseCampusImage(`${institution.name} ${institution.location}`);
+  if (openverseCampus) {
+    candidates.push(openverseCampus);
+    imageSource = 'openverse-search';
   }
 
   const unsplashCampus = getUnsplashCampusUrl(`${institution.name} ${institution.location}`);
@@ -277,13 +286,13 @@ const addImageData = async (institution) => {
 
   if (institution.explicitImage) {
     candidates.push(institution.explicitImage);
-    imageSource = imageSource === 'curated-campus-map' ? imageSource : 'explicit+campus-search';
+    if (imageSource === 'placeholder') imageSource = 'explicit+campus-search';
   } else {
     const wikiImage = await getWikimediaImage(`${institution.name} campus`);
     if (wikiImage) {
       candidates.push(wikiImage);
-      imageSource = imageSource === 'curated-campus-map' ? imageSource : 'campus-search+wikimedia';
-    } else if (imageSource !== 'curated-campus-map') {
+      if (imageSource === 'placeholder') imageSource = 'campus-search+wikimedia';
+    } else if (imageSource === 'placeholder') {
       imageSource = 'campus-search';
     }
   }
