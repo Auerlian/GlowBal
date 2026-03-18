@@ -111,6 +111,20 @@ const FALLBACK_UNIVERSITIES = [
     domain: 'u-tokyo.ac.jp',
     link: 'https://www.u-tokyo.ac.jp/en/',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Yasuda_Auditorium_-_Tokyo_University_03.jpg/1280px-Yasuda_Auditorium_-_Tokyo_University_03.jpg'
+  },
+  {
+    name: 'ETH Zurich',
+    country: 'Switzerland',
+    domain: 'ethz.ch',
+    link: 'https://ethz.ch/en.html',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/ETH_Zentrum.jpg/1280px-ETH_Zentrum.jpg'
+  },
+  {
+    name: 'Seoul National University',
+    country: 'South Korea',
+    domain: 'snu.ac.kr',
+    link: 'https://en.snu.ac.kr/',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Seoul_National_University_Main_Gate.jpg/1280px-Seoul_National_University_Main_Gate.jpg'
   }
 ];
 
@@ -302,14 +316,14 @@ export const getUniversityCandidates = async (answers = {}) => {
   try {
     const liveBatches = await Promise.all(countries.map((country) => fetchByCountry(country)));
     const normalizedLive = uniqueById(liveBatches.flat().map(normalizeInstitution));
-    const live = (await withImagePipeline(normalizedLive)).slice(0, 30);
+    const live = (await withImagePipeline(normalizedLive)).slice(0, 40);
 
-    if (live.length >= 6) {
+    if (live.length >= 12) {
       return { source: 'live', universities: live };
     }
 
     const fallback = await withImagePipeline(uniqueById(FALLBACK_UNIVERSITIES.map(normalizeInstitution)));
-    return { source: 'live+fallback', universities: uniqueById([...live, ...fallback]).slice(0, 30) };
+    return { source: 'live+fallback', universities: uniqueById([...live, ...fallback]).slice(0, 40) };
   } catch {
     return {
       source: 'fallback',

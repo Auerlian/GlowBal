@@ -249,7 +249,7 @@ const ResultsDashboard = ({ results }) => {
 
       <section className="report-columns" aria-label="University recommendation columns">
         {TIER_CONFIG.map(({ key, label, description, icon: TierGlyph, color }) => {
-          const tierItems = (results[key] || []).slice(0, 2);
+          const tierItems = (results[key] || []).slice(0, 4);
           return (
             <article className="glass-panel report-tier-column" key={key}>
               <header className="report-tier-head" style={{ borderBottomColor: color }}>

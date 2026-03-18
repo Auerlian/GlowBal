@@ -208,9 +208,43 @@ export const generateTieredMatches = (answers = {}, universities = [], profile =
   const usedCountries = new Set();
   const usedRegions = new Set();
 
-  return {
-    High: pickDiverse(grouped.High, 4, usedCountries, usedRegions),
-    Medium: pickDiverse(grouped.Medium, 4, usedCountries, usedRegions),
-    Low: pickDiverse(grouped.Low, 4, usedCountries, usedRegions)
+  let high = pickDiverse(grouped.High, 4, usedCountries, usedRegions);
+  let medium = pickDiverse(grouped.Medium, 4, usedCountries, usedRegions);
+  let low = pickDiverse(grouped.Low, 4, usedCountries, usedRegions);
+
+  // Guarantee uniqueness across all tiers by ID.
+  const seenIds = new Set();
+  const makeUnique = (items) => items.filter((item) => {
+    if (!item || seenIds.has(item.id)) return false;
+    seenIds.add(item.id);
+    return true;
+  });
+
+  high = makeUnique(high);
+  medium = makeUnique(medium);
+  low = makeUnique(low);
+
+  const fillerPool = scored.filter((item) => !seenIds.has(item.id));
+  const fillTo = (arr, target) => {
+    while (arr.length < target && fillerPool.length > 0) {
+      const next = fillerPool.shift();
+      if (!next || seenIds.has(next.id)) continue;
+      seenIds.add(next.id);
+      arr.push(next);
+    }
   };
+
+  fillTo(high, 4);
+  fillTo(medium, 4);
+  fillTo(low, 4);
+
+  // Hard guarantee: at least 12 unique picks when pool allows.
+  const totalUnique = high.length + medium.length + low.length;
+  if (totalUnique < 12 && scored.length >= 12) {
+    fillTo(high, 4);
+    fillTo(medium, 4);
+    fillTo(low, 4);
+  }
+
+  return { High: high, Medium: medium, Low: low };
 };
