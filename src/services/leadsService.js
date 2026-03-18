@@ -7,8 +7,8 @@ const VIETNAMESE_NAMES = [
 ];
 
 const INTERNATIONAL_ASIAN_NAMES = [
-  '林美玲', '王子涵', '陈伟', '山田太郎', '佐藤美咲', '김민준', '이지은', 'ธนกฤต ศรีวงศ์', 'Putri Lestari',
-  'Aarav Sharma', 'Priya Nair', 'Nur Aisyah', 'Hiro Tanaka', 'Siti Amina', 'Nguyễn Hải Đăng', 'Trần Bảo Châu'
+  '林美玲', '王子涵', '陈伟', '山田太郎', '佐藤美咲', '김민준', '이지은', 'ธนกฤต ศรีวงศ์',
+  'Putri Lestari', 'Rizky Pratama', 'Nguyễn Hải Đăng', 'Trần Bảo Châu', 'Phạm Mỹ Linh', 'Lê Quốc Huy'
 ];
 
 const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com.vn', 'outlook.com', 'icloud.com', 'proton.me', 'student.hcmus.edu.vn'];
@@ -127,14 +127,14 @@ const createFakeLead = (idx = 0) => {
   };
 };
 
-export const seedFakeLeads = (count = 213) => {
+export const seedFakeLeads = (count = 142) => {
   const generated = Array.from({ length: count }).map((_, idx) => createFakeLead(idx));
   generated.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   setLeads(generated);
   return generated;
 };
 
-export const ensureLeadCount = (targetCount = 213) => {
+export const ensureLeadCount = (targetCount = 142) => {
   const existing = getLeads();
   if (existing.length >= targetCount) return existing;
 

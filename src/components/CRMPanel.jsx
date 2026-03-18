@@ -19,11 +19,14 @@ const CRMPanel = () => {
   };
 
   React.useEffect(() => {
-    if (query.get('seedDemo') === '213' && leads.length < 213) {
-      seedFakeLeads(213);
+    const seedParam = Number(query.get('seedDemo'));
+    if (Number.isFinite(seedParam) && seedParam > 0) {
+      seedFakeLeads(seedParam);
       setRefreshKey((x) => x + 1);
     }
-  }, [query, leads.length]);
+    // intentionally run once on mount for explicit seed links
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const chartData = useMemo(() => {
     const startDate = new Date('2026-02-05T00:00:00.000Z').getTime();
@@ -59,7 +62,7 @@ const CRMPanel = () => {
     return { days, max, ticks };
   }, [leads]);
 
-  const demoLink = `${window.location.origin}${import.meta.env.BASE_URL}?crm=1&seedDemo=213`;
+  const demoLink = `${window.location.origin}${import.meta.env.BASE_URL}?crm=1&seedDemo=142`;
 
   return (
     <section className="glass-panel crm-wrap animate-fade-in">
