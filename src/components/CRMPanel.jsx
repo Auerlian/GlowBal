@@ -62,8 +62,6 @@ const CRMPanel = () => {
     return { days, max, ticks };
   }, [leads]);
 
-  const demoLink = `${window.location.origin}${import.meta.env.BASE_URL}?crm=1&seedDemo=142`;
-
   return (
     <section className="glass-panel crm-wrap animate-fade-in">
       <div className="crm-head">
@@ -88,11 +86,6 @@ const CRMPanel = () => {
         <button className="btn-secondary" onClick={() => setRefreshKey((x) => x + 1)}>
           Refresh
         </button>
-      </div>
-
-      <div className="glass-panel" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
-        <p style={{ fontWeight: 700, marginBottom: '0.35rem' }}>Direct CRM demo link</p>
-        <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem', wordBreak: 'break-all' }}>{demoLink}</p>
       </div>
 
       <div className="glass-panel" style={{ padding: '0.75rem', marginBottom: '0.8rem' }}>
