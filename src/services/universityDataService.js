@@ -155,26 +155,44 @@ const normalizeOfficialLink = (link, domain) => {
   }
 };
 
-const getClearbitLogoUrl = (domain) => `https://logo.clearbit.com/${normalizeDomain(domain)}`;
+const getClearbitLogoUrl = (domain) => `https://logo.clearbit.com/${normalizeDomain(domain)}?size=800`;
+const getGoogleFaviconUrl = (domain) => `https://www.google.com/s2/favicons?domain=${normalizeDomain(domain)}&sz=256`;
 
 const getWikimediaImage = async (name) => {
-  const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
+  const summaryEndpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
 
   try {
-    const res = await fetch(endpoint, {
+    const summaryRes = await fetch(summaryEndpoint, {
       headers: {
         Accept: 'application/json'
       }
     });
 
-    if (!res.ok) return null;
-    const data = await res.json();
+    if (summaryRes.ok) {
+      const summaryData = await summaryRes.json();
+      if (summaryData?.type !== 'disambiguation') {
+        const summaryImage = summaryData?.originalimage?.source || summaryData?.thumbnail?.source || null;
+        if (isHttpUrl(summaryImage)) return summaryImage;
+      }
+    }
+  } catch {
+    // fall through to search endpoint
+  }
 
-    if (data?.type === 'disambiguation') return null;
-    const image = data?.originalimage?.source || data?.thumbnail?.source || null;
-    if (!isHttpUrl(image)) return null;
+  try {
+    const searchEndpoint = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=original|thumbnail&pithumbsize=1200&generator=search&gsrsearch=${encodeURIComponent(`${name} university campus`)}&gsrlimit=1`;
+    const searchRes = await fetch(searchEndpoint);
+    if (!searchRes.ok) return null;
 
-    return image;
+    const searchData = await searchRes.json();
+    const pages = searchData?.query?.pages ? Object.values(searchData.query.pages) : [];
+    if (!pages.length) return null;
+
+    const page = pages[0];
+    const searchImage = page?.original?.source || page?.thumbnail?.source || null;
+    if (!isHttpUrl(searchImage)) return null;
+
+    return searchImage;
   } catch {
     return null;
   }
@@ -229,7 +247,9 @@ const addImageData = async (institution) => {
   }
 
   const clearbit = getClearbitLogoUrl(institution.domain);
+  const favicon = getGoogleFaviconUrl(institution.domain);
   candidates.push(clearbit);
+  candidates.push(favicon);
   candidates.push(LOCAL_IMAGE_FALLBACK);
 
   const uniqueCandidates = [...new Set(candidates.filter(Boolean))];

@@ -59,6 +59,7 @@ const UniversityImage = ({ item, className }) => {
       alt={item?.name || 'University image'}
       className={className}
       loading="lazy"
+      referrerPolicy="no-referrer"
       onError={(e) => {
         if (candidateIndex < candidates.length - 1) {
           setCandidateIndex((prev) => prev + 1);
@@ -83,7 +84,7 @@ const DetailPanel = ({ item, shortlisted, onToggleShortlist, onExport }) => {
 
   return (
     <section className="glass-panel report-detail-panel animate-fade-in">
-      <UniversityImage item={item} className="report-detail-image" />
+      <UniversityImage key={`${item.id}-detail`} item={item} className="report-detail-image" />
       <div className="report-detail-body">
         <div className="report-detail-head">
           <div>
@@ -269,7 +270,7 @@ const ResultsDashboard = ({ results }) => {
                       className={`report-compact-card ${active ? 'is-active' : ''}`}
                       onClick={() => handleSelectItem(item.id)}
                     >
-                      <UniversityImage item={item} className="report-compact-image" />
+                      <UniversityImage key={`${item.id}-card`} item={item} className="report-compact-image" />
                       <div className="report-compact-body">
                         <div>
                           <h3>{item.name}</h3>
