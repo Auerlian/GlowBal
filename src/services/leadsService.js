@@ -116,12 +116,51 @@ const pickNamePool = (idx = 0) => {
   return OTHER_INTERNATIONAL_NAMES;
 };
 
-const createFakeLead = (idx = 0) => {
-  const now = Date.now();
-  const start = new Date(SIGNUP_START_ISO).getTime();
+const buildDateBuckets = () => {
+  const start = new Date(SIGNUP_START_ISO);
+  const today = new Date();
+  const days = [];
+
+  for (let i = 0; ; i += 1) {
+    const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+    if (d > today) break;
+
+    const progress = i / Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)));
+    const startSpike = Math.exp(-Math.pow((progress - 0.08) / 0.08, 2));
+    const endSpike = Math.exp(-Math.pow((progress - 0.92) / 0.08, 2));
+    const baseline = 0.22 + 0.18 * Math.sin(progress * Math.PI * 1.6);
+
+    const weekday = d.getDay();
+    const weekendFactor = weekday === 0 || weekday === 6 ? 0.78 : 1;
+    const noise = 0.9 + Math.random() * 0.25;
+
+    const weight = Math.max(0.03, (baseline + startSpike * 1.75 + endSpike * 1.95) * weekendFactor * noise);
+    days.push({ date: d, weight });
+  }
+
+  return days;
+};
+
+const sampleWeightedDay = (buckets) => {
+  const total = buckets.reduce((sum, b) => sum + b.weight, 0);
+  let roll = Math.random() * total;
+  for (const bucket of buckets) {
+    roll -= bucket.weight;
+    if (roll <= 0) return bucket.date;
+  }
+  return buckets[buckets.length - 1]?.date || new Date();
+};
+
+const createFakeLead = (idx = 0, sampledDate = new Date()) => {
   const pool = pickNamePool(idx);
   const name = pool[idx % pool.length];
-  const createdAtMs = start + Math.floor(Math.random() * Math.max(now - start, 1));
+  const dayStart = new Date(sampledDate);
+  dayStart.setHours(0, 0, 0, 0);
+
+  const createdAtMs = dayStart.getTime()
+    + Math.floor((8 + Math.random() * 13) * 60 * 60 * 1000)
+    + Math.floor(Math.random() * 60 * 60 * 1000);
+
   const createdAt = new Date(createdAtMs).toISOString();
   const updatedAt = new Date(createdAtMs + Math.floor(Math.random() * 36 * 60 * 60 * 1000)).toISOString();
   const emailLocal = toEmailSlug(name, idx);
@@ -139,7 +178,8 @@ const createFakeLead = (idx = 0) => {
 };
 
 export const seedFakeLeads = (count = 142) => {
-  const generated = Array.from({ length: count }).map((_, idx) => createFakeLead(idx));
+  const buckets = buildDateBuckets();
+  const generated = Array.from({ length: count }).map((_, idx) => createFakeLead(idx, sampleWeightedDay(buckets)));
   generated.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   setLeads(generated);
   return generated;
@@ -149,12 +189,13 @@ export const ensureLeadCount = (targetCount = 142) => {
   const existing = getLeads();
   if (existing.length >= targetCount) return existing;
 
+  const buckets = buildDateBuckets();
   const seenEmails = new Set(existing.map((lead) => lead.email));
   const next = [...existing];
   let idx = existing.length;
 
   while (next.length < targetCount) {
-    const candidate = createFakeLead(idx);
+    const candidate = createFakeLead(idx, sampleWeightedDay(buckets));
     idx += 1;
     if (seenEmails.has(candidate.email)) continue;
     seenEmails.add(candidate.email);
