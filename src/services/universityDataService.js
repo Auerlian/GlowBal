@@ -169,8 +169,6 @@ const normalizeOfficialLink = (link, domain) => {
   }
 };
 
-const getClearbitLogoUrl = (domain) => `https://logo.clearbit.com/${normalizeDomain(domain)}?size=800`;
-const getGoogleFaviconUrl = (domain) => `https://www.google.com/s2/favicons?domain=${normalizeDomain(domain)}&sz=256`;
 const getUnsplashCampusUrl = (name) => `https://source.unsplash.com/1600x900/?${encodeURIComponent(`${name} university campus`)}`;
 
 const getWikimediaImage = async (name) => {
@@ -266,11 +264,7 @@ const addImageData = async (institution) => {
     }
   }
 
-  // Keep logos as very-late emergency fallback only.
-  const clearbit = getClearbitLogoUrl(institution.domain);
-  const favicon = getGoogleFaviconUrl(institution.domain);
-  candidates.push(clearbit);
-  candidates.push(favicon);
+  // Campus imagery only (no logos).
   candidates.push(LOCAL_IMAGE_FALLBACK);
 
   const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
