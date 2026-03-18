@@ -8,7 +8,11 @@ const VIETNAMESE_NAMES = [
 
 const INTERNATIONAL_ASIAN_NAMES = [
   '林美玲', '王子涵', '陈伟', '山田太郎', '佐藤美咲', '김민준', '이지은', 'ธนกฤต ศรีวงศ์',
-  'Putri Lestari', 'Rizky Pratama', 'Nguyễn Hải Đăng', 'Trần Bảo Châu', 'Phạm Mỹ Linh', 'Lê Quốc Huy'
+  'Putri Lestari', 'Rizky Pratama', 'Siti Aisyah', 'Aarav Sharma', 'Priya Nair', 'Nur Amina'
+];
+
+const OTHER_INTERNATIONAL_NAMES = [
+  'Sofia Rossi', 'Mateo Silva', 'Amelia Clarke', 'Noah Martin', 'Lea Dubois', 'Daniel Novak', 'Hana Petrova'
 ];
 
 const EMAIL_DOMAINS = ['gmail.com', 'yahoo.com.vn', 'outlook.com', 'icloud.com', 'proton.me', 'student.hcmus.edu.vn'];
@@ -104,11 +108,18 @@ const toEmailSlug = (name = '', idx = 0) => {
   return translit || `student${100 + idx}`;
 };
 
+const pickNamePool = (idx = 0) => {
+  // 75% Vietnamese, 20% Asian, 5% other
+  const bucket = idx % 20;
+  if (bucket < 15) return VIETNAMESE_NAMES;
+  if (bucket < 19) return INTERNATIONAL_ASIAN_NAMES;
+  return OTHER_INTERNATIONAL_NAMES;
+};
+
 const createFakeLead = (idx = 0) => {
   const now = Date.now();
   const start = new Date(SIGNUP_START_ISO).getTime();
-  const useVietnamese = idx % 5 !== 0;
-  const pool = useVietnamese ? VIETNAMESE_NAMES : INTERNATIONAL_ASIAN_NAMES;
+  const pool = pickNamePool(idx);
   const name = pool[idx % pool.length];
   const createdAtMs = start + Math.floor(Math.random() * Math.max(now - start, 1));
   const createdAt = new Date(createdAtMs).toISOString();

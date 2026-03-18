@@ -71,6 +71,10 @@ const CRMPanel = () => {
         <p>{leads.length} leads captured</p>
       </div>
 
+      <div className="glass-panel crm-total-users" style={{ padding: '0.7rem 0.8rem', marginBottom: '0.8rem' }}>
+        <strong>Total number of users:</strong> {leads.length}
+      </div>
+
       <div className="crm-actions">
         <button className="btn-secondary" onClick={copyEmails} disabled={!leads.length}>
           <Copy size={15} /> Copy all emails
