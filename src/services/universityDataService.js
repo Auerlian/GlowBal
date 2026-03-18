@@ -39,7 +39,8 @@ const REGION_TO_COUNTRIES = {
   Oceania: ['Australia']
 };
 
-const LOCAL_IMAGE_FALLBACK = `${import.meta.env.BASE_URL}images/university-placeholder.svg`;
+const BASE_URL = (typeof import.meta !== 'undefined' && import.meta?.env?.BASE_URL) ? import.meta.env.BASE_URL : '/';
+const LOCAL_IMAGE_FALLBACK = `${BASE_URL}images/university-placeholder.svg`;
 
 
 const FALLBACK_UNIVERSITIES = [
@@ -152,6 +153,49 @@ const inferSubjectStrength = (name = '') => {
 
 const isHttpUrl = (value = '') => /^https?:\/\//i.test(value);
 
+const IMAGE_BLOCKLIST_RE = /(logo|icon|crest|coat[_\s-]?of[_\s-]?arms|seal|emblem|wordmark|favicon|sprite|badge|shield|brand[_\s-]?mark|\\.svg($|\?))/i;
+const CAMPUS_HINT_RE = /(campus|university|college|institute|building|architecture|aerial|quad|hall|library|tower)/i;
+
+const toImageCandidate = ({ url, source, title = '', meta = {} } = {}) => {
+  if (!isHttpUrl(url)) return null;
+  return {
+    url,
+    source: source || 'unknown',
+    title,
+    ...meta
+  };
+};
+
+const isBlockedImageCandidate = (candidate) => {
+  const url = `${candidate?.url || ''}`;
+  const title = `${candidate?.title || ''}`;
+  const hay = `${decodeURIComponent(url)} ${title}`.toLowerCase();
+  return IMAGE_BLOCKLIST_RE.test(hay);
+};
+
+const scoreImageCandidate = (candidate) => {
+  const url = `${candidate?.url || ''}`.toLowerCase();
+  const title = `${candidate?.title || ''}`.toLowerCase();
+  const hay = `${url} ${title}`;
+
+  let score = 0;
+  if (CAMPUS_HINT_RE.test(hay)) score += 3;
+  if (hay.includes('commons.wikimedia.org') || hay.includes('wikipedia.org')) score += 2;
+  if (hay.includes('staticflickr.com')) score += 1;
+  if (hay.includes('source.unsplash.com')) score += 1;
+  if (isBlockedImageCandidate(candidate)) score -= 100;
+  return score;
+};
+
+const pickPrimaryCandidate = (candidates = []) => {
+  const safe = candidates.filter((candidate) => !isBlockedImageCandidate(candidate));
+  if (!safe.length) return null;
+
+  return safe
+    .map((candidate) => ({ candidate, score: scoreImageCandidate(candidate) }))
+    .sort((a, b) => b.score - a.score)[0]?.candidate || null;
+};
+
 const normalizeDomain = (domain = '') => domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim().toLowerCase();
 
 const normalizeOfficialLink = (link, domain) => {
@@ -170,7 +214,7 @@ const normalizeOfficialLink = (link, domain) => {
   }
 };
 
-const getUnsplashCampusUrl = (name) => `https://source.unsplash.com/1600x900/?${encodeURIComponent(`${name} university campus`)}`;
+const getUnsplashCampusUrl = (name) => `https://source.unsplash.com/1600x900/?${encodeURIComponent(`${name} university campus aerial architecture`)}`;
 
 const flickrToLarge = (url = '') => {
   if (!url) return null;
@@ -208,22 +252,19 @@ const getFlickrCampusImage = async (name) => {
 
     const scored = items
       .map((item) => {
-        const hay = `${item?.title || ''} ${item?.tags || ''}`.toLowerCase();
-        let score = 0;
-        if (hay.includes('campus')) score += 3;
-        if (hay.includes('university')) score += 2;
-        if (hay.includes('college')) score += 1;
-        if (hay.includes('logo') || hay.includes('icon')) score -= 4;
-        if (hay.includes('building') || hay.includes('architecture')) score += 1;
-        return { item, score };
+        const src = flickrToLarge(item?.media?.m || '');
+        const candidate = toImageCandidate({
+          url: src,
+          source: 'flickr-search',
+          title: item?.title || '',
+          meta: { feedLink: item?.link || null }
+        });
+        return { candidate, score: scoreImageCandidate(candidate || {}) };
       })
+      .filter((x) => x.candidate && x.candidate.url.includes('staticflickr.com') && !isBlockedImageCandidate(x.candidate))
       .sort((a, b) => b.score - a.score);
 
-    const picked = scored.find((x) => x.score >= 1)?.item || scored[0]?.item;
-    const src = picked?.media?.m;
-    if (!isHttpUrl(src) || !src.includes('staticflickr.com')) return null;
-
-    return flickrToLarge(src);
+    return scored[0]?.candidate || null;
   } catch {
     return null;
   }
@@ -269,7 +310,12 @@ const getWikidataCommonsCampusImage = async (name, country) => {
     const fileName = p18Claims[0]?.mainsnak?.datavalue?.value;
     if (!fileName || typeof fileName !== 'string') return null;
 
-    return commonsFilePath(fileName);
+    return toImageCandidate({
+      url: commonsFilePath(fileName),
+      source: 'wikidata-commons',
+      title: fileName,
+      meta: { entityId }
+    });
   } catch {
     return null;
   }
@@ -289,7 +335,12 @@ const getWikimediaImage = async (name) => {
       const summaryData = await summaryRes.json();
       if (summaryData?.type !== 'disambiguation') {
         const summaryImage = summaryData?.originalimage?.source || summaryData?.thumbnail?.source || null;
-        if (isHttpUrl(summaryImage)) return summaryImage;
+        const candidate = toImageCandidate({
+          url: summaryImage,
+          source: 'wikipedia-summary',
+          title: summaryData?.title || name
+        });
+        if (candidate && !isBlockedImageCandidate(candidate)) return candidate;
       }
     }
   } catch {
@@ -297,7 +348,7 @@ const getWikimediaImage = async (name) => {
   }
 
   try {
-    const searchEndpoint = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=original|thumbnail&pithumbsize=1200&generator=search&gsrsearch=${encodeURIComponent(`${name} university campus`)}&gsrlimit=1`;
+    const searchEndpoint = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages|info&inprop=url&piprop=original|thumbnail&pithumbsize=1200&generator=search&gsrsearch=${encodeURIComponent(`${name} campus building aerial architecture`)}&gsrlimit=5`;
     const searchRes = await fetch(searchEndpoint);
     if (!searchRes.ok) return null;
 
@@ -305,11 +356,17 @@ const getWikimediaImage = async (name) => {
     const pages = searchData?.query?.pages ? Object.values(searchData.query.pages) : [];
     if (!pages.length) return null;
 
-    const page = pages[0];
-    const searchImage = page?.original?.source || page?.thumbnail?.source || null;
-    if (!isHttpUrl(searchImage)) return null;
+    const candidates = pages
+      .map((page) => toImageCandidate({
+        url: page?.original?.source || page?.thumbnail?.source || null,
+        source: 'wikimedia-search',
+        title: page?.title || name,
+        meta: { pageUrl: page?.fullurl || null }
+      }))
+      .filter((candidate) => candidate && !isBlockedImageCandidate(candidate))
+      .sort((a, b) => scoreImageCandidate(b) - scoreImageCandidate(a));
 
-    return searchImage;
+    return candidates[0] || null;
   } catch {
     return null;
   }
@@ -350,45 +407,47 @@ const normalizeInstitution = (item) => {
 
 const addImageData = async (institution) => {
   const candidates = [];
-  let imageSource = 'placeholder';
 
   const wikidataCommons = await getWikidataCommonsCampusImage(institution.name, institution.location);
-  if (wikidataCommons) {
-    candidates.push(wikidataCommons);
-    imageSource = 'wikidata-commons';
-  }
+  if (wikidataCommons) candidates.push(wikidataCommons);
 
   const wikiImage = await getWikimediaImage(`${institution.name} campus`);
-  if (wikiImage) {
-    candidates.push(wikiImage);
-    if (imageSource === 'placeholder') imageSource = 'wikimedia-search';
-  }
+  if (wikiImage) candidates.push(wikiImage);
 
   // Optional campus-image fallbacks only.
-  const unsplashCampus = getUnsplashCampusUrl(`${institution.name} ${institution.location}`);
-  candidates.push(unsplashCampus);
+  candidates.push(toImageCandidate({
+    url: getUnsplashCampusUrl(`${institution.name} ${institution.location}`),
+    source: 'unsplash-campus',
+    title: `${institution.name} campus`
+  }));
 
   const flickrCampus = await getFlickrCampusImage(`${institution.name} ${institution.location}`);
-  if (flickrCampus) {
-    candidates.push(flickrCampus);
-    if (imageSource === 'placeholder') imageSource = 'flickr-search';
-  }
+  if (flickrCampus) candidates.push(flickrCampus);
 
   if (institution.explicitImage) {
-    candidates.push(institution.explicitImage);
-    if (imageSource === 'placeholder') imageSource = 'explicit';
+    candidates.push(toImageCandidate({
+      url: institution.explicitImage,
+      source: 'explicit',
+      title: `${institution.name} explicit image`
+    }));
   }
 
-  candidates.push(LOCAL_IMAGE_FALLBACK);
+  const safeCandidates = candidates.filter((candidate) => candidate && !isBlockedImageCandidate(candidate));
+  const byUrl = new Map();
+  safeCandidates.forEach((candidate) => {
+    if (!byUrl.has(candidate.url)) byUrl.set(candidate.url, candidate);
+  });
 
-  const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
+  const uniqueSafeCandidates = [...byUrl.values()].sort((a, b) => scoreImageCandidate(b) - scoreImageCandidate(a));
+  const primary = pickPrimaryCandidate(uniqueSafeCandidates);
 
   return {
     ...institution,
-    image: uniqueCandidates[0] || LOCAL_IMAGE_FALLBACK,
-    imageCandidates: uniqueCandidates,
+    image: primary?.url || LOCAL_IMAGE_FALLBACK,
+    imageCandidates: uniqueSafeCandidates.map((candidate) => candidate.url).concat([LOCAL_IMAGE_FALLBACK]),
+    imageCandidateMeta: uniqueSafeCandidates,
     imageFallback: LOCAL_IMAGE_FALLBACK,
-    imageSource
+    imageSource: primary?.source || 'placeholder'
   };
 };
 
@@ -421,17 +480,28 @@ const selectCountries = (answers = {}) => {
 const withImagePipeline = async (institutions = []) => {
   const enriched = await Promise.all(institutions.map(addImageData));
 
-  // Reduce repeated primary images across universities by rotating to next available candidate.
+  // Reduce repeated primary images across universities by rotating to next available safe candidate.
   const used = new Set();
   return enriched.map((item) => {
-    const candidates = item.imageCandidates || [];
-    const uniquePrimary = candidates.find((url) => !used.has(url)) || candidates[0] || LOCAL_IMAGE_FALLBACK;
-    used.add(uniquePrimary);
+    const meta = Array.isArray(item.imageCandidateMeta) ? item.imageCandidateMeta : [];
+    const safeRotated = meta.find((candidate) => !used.has(candidate.url)) || meta[0] || null;
+    const chosen = safeRotated?.url || LOCAL_IMAGE_FALLBACK;
+
+    if (chosen !== LOCAL_IMAGE_FALLBACK) used.add(chosen);
+
     return {
       ...item,
-      image: uniquePrimary
+      image: chosen,
+      imageSource: safeRotated?.source || item.imageSource || 'placeholder'
     };
   });
+};
+
+export const __imageSafetyTestables = {
+  isBlockedImageCandidate,
+  scoreImageCandidate,
+  pickPrimaryCandidate,
+  IMAGE_BLOCKLIST_RE
 };
 
 export const getUniversityCandidates = async (answers = {}) => {
