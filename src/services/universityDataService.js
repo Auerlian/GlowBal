@@ -229,27 +229,47 @@ const getFlickrCampusImage = async (name) => {
   }
 };
 
-const getOpenverseCampusImage = async (name) => {
-  const endpoint = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(`${name} university campus`)}`
-    + '&page_size=12&license_type=commercial';
+const getWikidataEntityId = async (name, country) => {
+  const query = `${name} ${country}`.trim();
+  const endpoint = `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&origin=*&language=en&type=item&limit=5&search=${encodeURIComponent(query)}`;
 
   try {
     const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
     if (!res.ok) return null;
     const data = await res.json();
-    const results = Array.isArray(data?.results) ? data.results : [];
+    const results = Array.isArray(data?.search) ? data.search : [];
 
-    const candidate = results.find((img) => {
-      const url = img?.url;
-      if (!isHttpUrl(url)) return false;
-      const title = `${img?.title || ''} ${img?.foreign_landing_url || ''}`.toLowerCase();
-      if (title.includes('logo') || title.includes('icon')) return false;
-      const w = Number(img?.width || 0);
-      const h = Number(img?.height || 0);
-      return w >= 900 && h >= 500;
-    }) || results.find((img) => isHttpUrl(img?.url));
+    const best = results.find((item) => {
+      const desc = `${item?.description || ''}`.toLowerCase();
+      return desc.includes('university') || desc.includes('college') || desc.includes('institute');
+    }) || results[0];
 
-    return candidate?.url || null;
+    return best?.id || null;
+  } catch {
+    return null;
+  }
+};
+
+const commonsFilePath = (fileName = '') => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
+
+const getWikidataCommonsCampusImage = async (name, country) => {
+  const entityId = await getWikidataEntityId(name, country);
+  if (!entityId) return null;
+
+  const endpoint = `https://www.wikidata.org/wiki/Special:EntityData/${entityId}.json`;
+  try {
+    const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    const entity = data?.entities?.[entityId];
+    const p18Claims = entity?.claims?.P18 || [];
+    if (!p18Claims.length) return null;
+
+    const fileName = p18Claims[0]?.mainsnak?.datavalue?.value;
+    if (!fileName || typeof fileName !== 'string') return null;
+
+    return commonsFilePath(fileName);
   } catch {
     return null;
   }
@@ -332,36 +352,33 @@ const addImageData = async (institution) => {
   const candidates = [];
   let imageSource = 'placeholder';
 
-  const flickrCampus = await getFlickrCampusImage(`${institution.name} ${institution.location}`);
-  if (flickrCampus) {
-    candidates.push(flickrCampus);
-    imageSource = 'flickr-search';
+  const wikidataCommons = await getWikidataCommonsCampusImage(institution.name, institution.location);
+  if (wikidataCommons) {
+    candidates.push(wikidataCommons);
+    imageSource = 'wikidata-commons';
   }
 
-  // Keep Openverse only as deep fallback if Flickr doesn't return a strong result.
-  const openverseCampus = await getOpenverseCampusImage(`${institution.name} ${institution.location}`);
-  if (openverseCampus) {
-    candidates.push(openverseCampus);
-    if (imageSource === 'placeholder') imageSource = 'openverse-search';
+  const wikiImage = await getWikimediaImage(`${institution.name} campus`);
+  if (wikiImage) {
+    candidates.push(wikiImage);
+    if (imageSource === 'placeholder') imageSource = 'wikimedia-search';
   }
 
+  // Optional campus-image fallbacks only.
   const unsplashCampus = getUnsplashCampusUrl(`${institution.name} ${institution.location}`);
   candidates.push(unsplashCampus);
 
-  if (institution.explicitImage) {
-    candidates.push(institution.explicitImage);
-    if (imageSource === 'placeholder') imageSource = 'explicit+campus-search';
-  } else {
-    const wikiImage = await getWikimediaImage(`${institution.name} campus`);
-    if (wikiImage) {
-      candidates.push(wikiImage);
-      if (imageSource === 'placeholder') imageSource = 'campus-search+wikimedia';
-    } else if (imageSource === 'placeholder') {
-      imageSource = 'campus-search';
-    }
+  const flickrCampus = await getFlickrCampusImage(`${institution.name} ${institution.location}`);
+  if (flickrCampus) {
+    candidates.push(flickrCampus);
+    if (imageSource === 'placeholder') imageSource = 'flickr-search';
   }
 
-  // Campus imagery only (no logos).
+  if (institution.explicitImage) {
+    candidates.push(institution.explicitImage);
+    if (imageSource === 'placeholder') imageSource = 'explicit';
+  }
+
   candidates.push(LOCAL_IMAGE_FALLBACK);
 
   const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
