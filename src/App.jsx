@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Loader2, AlertTriangle, RefreshCcw } from 'lucide-react';
 import HeroUpload from './components/HeroUpload';
 import QuestionCard from './components/QuestionCard';
 import ResultsDashboard from './components/ResultsDashboard';
+import LandingPage from './components/LandingPage';
+import CRMPanel from './components/CRMPanel';
 import { processCV, generateResults } from './services/matchingService';
 import { trackEvent } from './services/analytics';
 import AmbientBackground from './components/AmbientBackground';
@@ -17,6 +19,11 @@ const STATES = {
 };
 
 function App() {
+  const query = useMemo(() => new URLSearchParams(window.location.search), []);
+  const isCreatorMode = query.get('app') === '1';
+  const isCrmMode = query.get('crm') === '1';
+
+  const [showLanding, setShowLanding] = useState(!isCreatorMode && !isCrmMode);
   const [currentState, setCurrentState] = useState(STATES.IDLE);
   const [logoVideoFailed, setLogoVideoFailed] = useState(false);
   const [logoOpacity, setLogoOpacity] = useState(1);
@@ -101,6 +108,7 @@ function App() {
       setResults(null);
       setProfileContext(null);
       setErrorMessage('');
+      if (!isCreatorMode && !isCrmMode) setShowLanding(true);
     }
   };
 
@@ -196,26 +204,34 @@ function App() {
       {renderHeader()}
 
       <main className="container content-layer main-content app-main">
-        {errorMessage && renderErrorState()}
+        {isCrmMode ? (
+          <CRMPanel />
+        ) : showLanding ? (
+          <LandingPage onOpenCreator={() => setShowLanding(false)} />
+        ) : (
+          <>
+            {errorMessage && renderErrorState()}
 
-        {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
-        {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
+            {currentState === STATES.IDLE && <HeroUpload onUpload={handleCVUpload} />}
+            {currentState === STATES.ANALYZING_CV && renderLoadingState('Analyzing your CV...')}
 
-        {currentState === STATES.QUESTIONNAIRE && questions.length > 0 && (
-          <QuestionCard
-            key={questions[currentQuestionIndex].id}
-            question={questions[currentQuestionIndex]}
-            index={currentQuestionIndex}
-            total={questions.length}
-            savedAnswer={answers[questions[currentQuestionIndex].id] || []}
-            onNext={handleAnswerSubmit}
-            onBack={handleBackQuestion}
-            canGoBack={currentQuestionIndex > 0}
-          />
+            {currentState === STATES.QUESTIONNAIRE && questions.length > 0 && (
+              <QuestionCard
+                key={questions[currentQuestionIndex].id}
+                question={questions[currentQuestionIndex]}
+                index={currentQuestionIndex}
+                total={questions.length}
+                savedAnswer={answers[questions[currentQuestionIndex].id] || []}
+                onNext={handleAnswerSubmit}
+                onBack={handleBackQuestion}
+                canGoBack={currentQuestionIndex > 0}
+              />
+            )}
+
+            {currentState === STATES.ANALYZING_ANSWERS && renderLoadingState('Curating perfect matches...')}
+            {currentState === STATES.RESULTS && results && <ResultsDashboard results={results} />}
+          </>
         )}
-
-        {currentState === STATES.ANALYZING_ANSWERS && renderLoadingState('Curating perfect matches...')}
-        {currentState === STATES.RESULTS && results && <ResultsDashboard results={results} />}
       </main>
     </div>
   );
