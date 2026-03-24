@@ -54,10 +54,10 @@ const HeroUpload = ({ onUpload, onSkipCV }) => {
     <div className="hero-upload-wrap flex-col flex-center animate-fade-in" style={{ gap: '0.8rem', padding: '0 0 0.9rem 0', width: '100%' }}>
       <div className="hero-intro">
         <h2 className="hero-intro-title">
-          Build a realistic university shortlist in <span className="text-gradient">minutes.</span>
+          Wanna know where your <span className="text-gradient">fate</span> lies?
         </h2>
         <p className="hero-intro-subtitle">
-          6 quick questions. CV upload is optional.
+          Our AI gives you clues based on your past performance. Give us a hand.
         </p>
       </div>
 
@@ -124,8 +124,8 @@ const HeroUpload = ({ onUpload, onSkipCV }) => {
         ) : (
           <div className="flex-col flex-center" style={{ gap: '0.5rem' }}>
             <Upload size={34} color={isHovered ? 'var(--glowbal-mint)' : 'var(--glowbal-pink)'} style={{ transition: 'all 0.3s ease' }} />
-            <h3 style={{ fontSize: '1rem' }}>Upload your CV (optional)</h3>
-            <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>Drag/drop or click to browse</p>
+            <h3 style={{ fontSize: '1rem' }}>Input your CV / portfolio</h3>
+            <p style={{ color: 'var(--glowbal-silver)', fontSize: '0.9rem' }}>Drag &amp; drop or click to browse</p>
           </div>
         )}
       </div>
