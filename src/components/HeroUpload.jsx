@@ -82,13 +82,7 @@ const HeroUpload = ({ onUpload, onSkipCV }) => {
           width: '100%',
           maxWidth: '660px',
           minHeight: '150px',
-          height: 'clamp(150px, 20vh, 185px)',
-          borderStyle: isHovered ? 'solid' : 'dashed',
-          borderColor: isHovered ? 'var(--glowbal-mint)' : 'rgba(0,0,0,0.2)',
-          borderWidth: '2px',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          backgroundColor: isHovered ? 'rgba(0, 180, 216, 0.05)' : 'rgba(255, 255, 255, 0.5)'
+          height: 'clamp(150px, 20vh, 185px)'
         }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
